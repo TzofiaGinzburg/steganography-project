@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# React / React Native
+.expo/
+dist/
+build/
+
+# Env
+.env
+.env.local
+
+# Android / iOS
+android/.gradle/
+android/build/
+android/app/build/
+ios/Pods/
+
+# OS
+.DS_Store
+Thumbs.db
