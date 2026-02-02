@@ -1,18 +1,28 @@
 package com.photoServer.model;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
+@Document(collection = "users")
 
 public class User {
-    private long id;          // ת"ז
+    @Id
+    private String id;          // ת"ז
     private String firstName;
     private String lastName;
-    private long phone;
+    private String phone;
     private String email;
     private String address;
+    @JsonFormat(pattern = "yyyy-MM-dd") // זה יגרום לו לקבל את הפורמט מה-React
+
     private Date birthDate;
     private String username;
     private String password;
+    @JsonProperty("userImage") // זה גורם ל-Java להבין ש-userImage מה-JS שייך לשדה הזה
     private String profileImage; // נשמור את התמונה כמחרוזת Base64 בשלב זה
 
     // קונסטרקטור ריק (חובה ל-Spring)
@@ -28,19 +38,19 @@ public class User {
         this.firstName = firstName;
     }
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public long getPhone() {
+    public String getPhone() {
         return phone;
     }
 
-    public void setPhone(long phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 
