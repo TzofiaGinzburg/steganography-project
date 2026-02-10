@@ -8,7 +8,7 @@ import { Colors } from '../styles/theme';
 export const MainScreen = ({ navigation, route }: any) => {
   const { userName } = route.params || { userName: "אורח" };
   const [invitations, setInvitations] = useState<any[]>([]);
-  const MY_IP = "192.168.1.112";
+  const MY_IP = "192.168.1.12";
 
   useEffect(() => {
     const checkInvites = async () => {

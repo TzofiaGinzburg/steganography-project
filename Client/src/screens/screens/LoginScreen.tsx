@@ -43,7 +43,7 @@ const handleLogin = async () => {
 
   setLoading(true);
   try {
-    const response = await fetch(`http://192.168.1.112:8080/api/users/login`, {
+    const response = await fetch(`http://192.168.1.12:8080/api/users/login`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

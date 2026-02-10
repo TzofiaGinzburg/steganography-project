@@ -1,59 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { 
+  View, Text, TouchableOpacity, StyleSheet, FlatList, 
+  ActivityIndicator, Alert, RefreshControl 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const MyGroups = ({ navigation, route }: any) => {
-  // קבלת שם המשתמש מה-Params (אם אין, נשתמש בערך ברירת מחדל לבדיקה)
-  const { userName } = route.params || { userName: "אורח" };
-  const [groups, setGroups] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const MY_IP = "192.168.1.112";
+const MyGroupsScreen = ({ navigation, route }: any) => {
+  // קבלת שם המשתמש מה-Params
+  const { userName } = route.params || { userName: 'אורח' };
+  const MY_IP = '192.168.1.112'; // <--- וודא שזה ה-IP של המחשב שלך
 
-  // שליפת הקבוצות מהשרת
-  const fetchGroups = async () => {
+  const [activeTab, setActiveTab] = useState<'mine' | 'invites'>('mine');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // פונקציה לשליפת כל הנתונים
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await fetch(`http://${MY_IP}:8080/api/groups/my-groups/${userName}`);
-      const data = await res.json();
-      setGroups(data);
-    } catch (e) {
-      console.log("Error fetching groups:", e);
-      // במקרה של שגיאה, אפשר להציג נתונים זמניים כדי שהאפליקציה לא תראה ריקה
+      // 1. שליפת קבוצות שאתה חבר בהן
+      const resGroups = await fetch(`http://${MY_IP}:8080/api/users/${userName}/groups`);
+      const groupsData = await resGroups.json();
+      setGroups(Array.isArray(groupsData) ? groupsData : []);
+
+      // 2. שליפת הזמנות שמחכות לך
+      const resInvites = await fetch(`http://${MY_IP}:8080/api/invitations/${userName}`);
+      const invitesData = await resInvites.json();
+      setInvites(Array.isArray(invitesData) ? invitesData : []);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      Alert.alert("שגיאה", "לא ניתן להתחבר לשרת. בדוק שה-IP נכון ושהשרת רץ.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGroups();
+    fetchData();
   }, [userName]);
 
-  const handleAddGroup = () => {
-    Alert.alert("יצירת קבוצה", "כאן יפתח מסך ליצירת קבוצה חדשה בעתיד.");
-  };
-
-  const handleRemoveGroup = (id: string) => {
-    Alert.alert("עזיבת קבוצה", "האם אתה בטוח שברצונך לעזוב את הקבוצה?", [
-      { text: "ביטול", style: "cancel" },
-      { 
-        text: "כן, עזוב", 
-        style: "destructive",
-        onPress: () => {
-            // כאן תוסיף fetch עם DELETE לשרת
-            setGroups(groups.filter(g => g.id !== id));
-        } 
+  // פונקציית אישור הצטרפות
+  const handleAccept = async (inviteId: string) => {
+    try {
+      const response = await fetch(`http://${MY_IP}:8080/api/invitations/accept/${inviteId}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        Alert.alert("הצלחה", "הצטרפת לקבוצה!");
+        fetchData(); // רענון הנתונים
       }
-    ]);
+    } catch (e) {
+      Alert.alert("שגיאה", "פעולת האישור נכשלה.");
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* כותרת וכפתור הוספה */}
+      {/* כותרת */}
       <View style={styles.header}>
-        <Text style={styles.title}>הקבוצות שלי</Text>
-        <TouchableOpacity style={styles.addButton} onPress={handleAddGroup}>
-          <Text style={styles.addButtonText}>+</Text>
+        <Text style={styles.headerTitle}>הקבוצות שלי</Text>
+      </View>
+
+      {/* תפריט טאבים (Tabs) */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'invites' && styles.activeTab]} 
+          onPress={() => setActiveTab('invites')}
+        >
+          <Text style={[styles.tabText, activeTab === 'invites' && styles.activeTabText]}>
+            הזמנות ({invites.length})
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'mine' && styles.activeTab]} 
+          onPress={() => setActiveTab('mine')}
+        >
+          <Text style={[styles.tabText, activeTab === 'mine' && styles.activeTabText]}>
+            הקבוצות שלי ({groups.length})
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -61,30 +88,31 @@ const MyGroups = ({ navigation, route }: any) => {
         <ActivityIndicator size="large" color="#6200EE" style={{ marginTop: 50 }} />
       ) : (
         <FlatList
-          data={groups}
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={<Text style={styles.emptyText}>עדיין לא הצטרפת לאף קבוצה</Text>}
+          data={activeTab === 'mine' ? groups : invites}
+          keyExtractor={(item) => item.id || Math.random().toString()}
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
           renderItem={({ item }) => (
-            <View style={styles.groupItem}>
-              {/* לחיצה מעבירה לפיד הקבוצתי */}
-              <TouchableOpacity 
-                style={styles.groupInfo}
-                onPress={() => navigation.navigate('GlobalFeed', { 
-                  target: item.id, 
-                  groupName: item.name 
-                })}
-              >
-                <Text style={styles.groupName}>{item.name}</Text>
-                <Text style={styles.groupMembers}>
-                    {item.membersCount || 0} חברים • נוצר ע"י {item.creator || 'מערכת'}
+            <View style={styles.card}>
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardTitle}>{item.name || item.groupName}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {activeTab === 'mine' ? `נוצר על ידי: ${item.creator}` : `הוזמנת על ידי: ${item.inviterUsername}`}
                 </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={() => handleRemoveGroup(item.id)}>
-                <Text style={styles.removeIcon}>🗑️</Text>
-              </TouchableOpacity>
+              </View>
+
+              {activeTab === 'invites' && (
+                <TouchableOpacity style={styles.acceptBtn} onPress={() => handleAccept(item.id)}>
+                  <Text style={styles.acceptBtnText}>אישור הצטרפות</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              {activeTab === 'mine' ? "עדיין אין לך קבוצות" : "אין הזמנות חדשות"}
+            </Text>
+          }
         />
       )}
     </SafeAreaView>
@@ -92,44 +120,28 @@ const MyGroups = ({ navigation, route }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA', paddingHorizontal: 20 },
-  header: { 
-    flexDirection: 'row-reverse', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginTop: 20, 
-    marginBottom: 30 
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  header: { padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#EEE' },
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#6200EE' },
+  tabBar: { flexDirection: 'row', backgroundColor: '#FFF', elevation: 2 },
+  tab: { flex: 1, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  activeTab: { borderBottomColor: '#6200EE' },
+  tabText: { fontSize: 16, color: '#666', fontWeight: '600' },
+  activeTabText: { color: '#6200EE' },
+  listContent: { padding: 15 },
+  card: { 
+    backgroundColor: '#FFF', padding: 15, borderRadius: 12, marginBottom: 10,
+    shadowColor: '#000', shadowOpacity: 0.1, elevation: 3 
   },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#6200EE' },
-  addButton: { 
-    backgroundColor: '#6200EE', 
-    width: 50, 
-    height: 50, 
-    borderRadius: 25, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    elevation: 4
+  cardInfo: { alignItems: 'flex-end' },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  cardSubtitle: { fontSize: 14, color: '#777', marginTop: 4 },
+  acceptBtn: { 
+    backgroundColor: '#4CAF50', padding: 12, borderRadius: 8, 
+    marginTop: 15, alignItems: 'center' 
   },
-  addButtonText: { color: 'white', fontSize: 30, fontWeight: '300' },
-  groupItem: { 
-    backgroundColor: 'white', 
-    padding: 18, 
-    borderRadius: 15, 
-    marginBottom: 12, 
-    flexDirection: 'row-reverse', 
-    justifyContent: 'space-between', 
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  groupInfo: { flex: 1, alignItems: 'flex-end' },
-  groupName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  groupMembers: { color: '#777', marginTop: 4, fontSize: 14 },
-  removeIcon: { fontSize: 22, padding: 5 },
-  emptyText: { textAlign: 'center', marginTop: 100, fontSize: 16, color: '#999' }
+  acceptBtnText: { color: '#FFF', fontWeight: 'bold' },
+  emptyText: { textAlign: 'center', marginTop: 50, color: '#999', fontSize: 16 }
 });
 
-export default MyGroups;
+export default MyGroupsScreen;

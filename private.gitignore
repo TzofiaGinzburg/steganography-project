@@ -21,3 +21,5 @@ ios/Pods/
 # OS
 .DS_Store
 Thumbs.db
+# Spring Boot / Java Properties
+server/src/main/resources/application.properties
