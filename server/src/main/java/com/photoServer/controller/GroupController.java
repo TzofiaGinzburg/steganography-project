@@ -26,23 +26,37 @@ public class GroupController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(@RequestBody GroupRequest request) {
-        // 1. שמירת הקבוצה עצמה
+        // 1. יצירת הקבוצה
         Group newGroup = new Group();
         newGroup.setName(request.getGroupName());
-        newGroup.setCreator(request.getCreator());
+        newGroup.setCreator(request.getCreator()); // שומר את 'tami' למשל
+
+        List<Group.Member> members = new ArrayList<>();
+        members.add(new Group.Member(request.getCreator(), true)); // המנהל
+        newGroup.setMembers(members);
         groupRepository.save(newGroup);
 
-        // 2. שליחת הזמנה לכל חבר שהוספת לרשימה למטה ב-React
-        for (MemberDTO member : request.getInvitedMembers()) {
-            Invitation invite = new Invitation();
-            invite.setGroupName(request.getGroupName());
-            invite.setInvitedUsername(member.getUsername());
-            invite.setStatus("PENDING"); // הסטטוס שיישמר ב-DB עבורם
-            invitationRepository.save(invite);
-        }
+        // 2. יצירת ההזמנות - כאן התיקון עבור המוזמנים
+        if (request.getInvitedMembers() != null) {
+            for (MemberDTO member : request.getInvitedMembers()) {
+                Invitation invite = new Invitation();
+                invite.setGroupName(request.getGroupName());
 
-        return ResponseEntity.ok("הקבוצה נוצרה והזמנות נשלחו לכל הרשימה!");
+                // שים לב: כאן אנחנו לוקחים את השם של החבר שהוזמן!
+                invite.setInvitedUsername(member.getUsername());
+
+                // מי ששלח את ההזמנה (היוצר)
+                invite.setInviterUsername(request.getCreator());
+
+                invite.setStatus("PENDING");
+                invitationRepository.save(invite);
+
+                System.out.println("Invitation sent to: " + member.getUsername());
+            }
+        }
+        return ResponseEntity.ok("הקבוצה נוצרה והזמנות נשלחו לחברים");
     }
+    
     // נקודת קצה לבדיקת הזמנות ממתינות (עבור ה"הבהוב" באפליקציה)
     @GetMapping("/invitations/{username}")
     public ResponseEntity<List<Invitation>> getMyInvitations(@PathVariable String username) {
@@ -51,23 +65,44 @@ public class GroupController {
     }
 
 
-    // 2. אישור הצטרפות לקבוצה
     @PostMapping("/invitations/accept")
     public ResponseEntity<?> acceptInvitation(@RequestParam String invitationId) {
-        Invitation invite = invitationRepository.findById(invitationId).orElseThrow();
+        // 1. מציאת ההזמנה
+        Invitation invite = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new RuntimeException("הזמנה לא נמצאה"));
+
+        // 2. עדכון סטטוס ההזמנה
         invite.setStatus("ACCEPTED");
         invitationRepository.save(invite);
 
-        // כאן כדאי להוסיף את המשתמש לרשימת ה-members של הקבוצה ב-DB
+        // 3. הוספת המשתמש לקבוצה האמיתית
         Group group = groupRepository.findByName(invite.getGroupName());
-        // לוגיקה להוספת חבר...
+        if (group != null) {
+            // יצירת אובייקט חבר חדש
+            Group.Member newMember = new Group.Member(invite.getInvitedUsername(), false); // false כי הוא לא אדמין
 
-        return ResponseEntity.ok("Welcome to the group!");
+            // הוספה לרשימת החברים הקיימת
+            if (group.getMembers() == null) {
+                group.setMembers(new ArrayList<>());
+            }
+
+            // בדיקה שהחבר לא כבר רשום (ליתר ביטחון)
+            boolean alreadyMember = group.getMembers().stream()
+                    .anyMatch(m -> m.getUsername().equals(invite.getInvitedUsername()));
+
+            if (!alreadyMember) {
+                group.getMembers().add(newMember);
+                groupRepository.save(group);
+            }
+            return ResponseEntity.ok("הצטרפת לקבוצה בהצלחה!");
+        }
+        return ResponseEntity.status(404).body("הקבוצה לא נמצאה");
     }
-
     @GetMapping("/my-groups/{username}")
     public ResponseEntity<List<Group>> getMyGroups(@PathVariable String username) {
-        // הוספנו קו תחתי בין Members ל-Username
-        return ResponseEntity.ok(groupRepository.findByMembers_Username(username));
+        // שימוש בפונקציה המדויקת מה-Repository
+        List<Group> groups = groupRepository.findByMemberUsername(username);
+        return ResponseEntity.ok(groups);
     }
+
 }

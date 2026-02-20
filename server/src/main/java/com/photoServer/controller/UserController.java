@@ -124,6 +124,6 @@ public class UserController {
     @GetMapping("/my-groups/{username}")
     public ResponseEntity<List<Group>> getMyGroups(@PathVariable String username) {
         // מחפש קבוצות שבהן השם מופיע ברשימת ה-members
-        return ResponseEntity.ok(groupRepository.findByMembers_Username(username));    }
+        return ResponseEntity.ok(groupRepository.findByMemberUsername(username));    }
 
 }

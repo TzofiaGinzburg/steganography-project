@@ -7,18 +7,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // ייבוא המסכים - שים לב לנתיבים! 
 // אם יש שגיאה, ודא שהקבצים באמת שם
-import HomeScreen from './src/screens/screens/HomeScreen';
-import LoginScreen from './src/screens/screens/LoginScreen';
-import RegisterScreen from './src/screens/screens/RegisterScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 
-import MenuScreen from './src/screens/screens/MenuScreen';
-import MyGroups from './src/screens/screens/MyGroups';
-import GroupDetailScreen from './src/screens/screens/GroupDetailScreen';
-import MenuNew from './src/screens/screens/MenuNew';
-import CreatePostScreen from './src/screens/screens/CreatePostScreen'; // המסך החדש
-import GlobalFeedScreen from './src/screens/screens/GlobalFeedScreen'; // המסך החדש
+import MenuScreen from './src/screens/MenuScreen';
+import MyGroups from './src/screens/MyGroups';
+import GroupDetailScreen from './src/screens/GroupDetailScreen';
+import MenuNew from './src/screens/MenuNew';
+import CreatePostScreen from './src/screens/CreatePostScreen'; // המסך החדש
+import GlobalFeedScreen from './src/screens/GlobalFeedScreen'; // המסך החדש
 
-import CreateGroupScreen from './src/screens/screens/CreateGroupScreen'; // המסך החדש
+import CreateGroupScreen from './src/screens/CreateGroupScreen'; // המסך החדש
 
 // ואז בתוך ה-Stack:
 const Stack = createStackNavigator();
