@@ -423,7 +423,7 @@ const MyGroups = ({ navigation, route }: any) => {
               style={styles.card} 
               onPress={() => {
                 // לחיצה על הקבוצה מעבירה למסך פרטי קבוצה
-                navigation.navigate('GroupDetails', { 
+                navigation.navigate('GroupDetailScreen', { 
                   groupId: item.id, 
                   groupName: item.name || item.groupName 
                 });

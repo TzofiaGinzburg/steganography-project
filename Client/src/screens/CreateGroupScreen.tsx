@@ -470,7 +470,7 @@ const CreateGroupScreen = ({ navigation, route }: any) => {
       fullName: currentRealName, 
       isAdmin: true, 
       isCreator: true, 
-      status: 'חבר' 
+      status: 'מנהל כחבר' 
     }
   ]);
 
@@ -724,4 +724,4 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 });
 
-export default CreateGroupScreen;
+export default CreateGroupScreen;// 1. שליפת הקבוצה כדי להוציא את רשימת החברים

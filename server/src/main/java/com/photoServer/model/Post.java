@@ -1,38 +1,39 @@
 package com.photoServer.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@Document(collection = "posts")
 public class Post {
-    // 1. הגדרת המשתנים
+    @Id
     private String id;
     private String description;
-    private String author;
-    private String target;
-    private String imageUrl;
-    private String createdAt; // הוספנו תאריך כדי שנוכל למיין מהחדש לישן
-    private String secretMessage;
+    private String author;        // מי ששלח
+    private String target;        // groupId או "world"
+    private String imageUrl;      // URL לתמונה בשרת
+    private String createdAt;
 
-    // 2. בנאי ריק (חובה עבור Jackson - הספריה שממירה ל-JSON)
-    public Post() {}
+    // המפה המנצחת: המפתח הוא שם המשתמש, הערך הוא המסר הסודי שלו
+    private Map<String, String> userMessages = new HashMap<>();
 
-    // 3. הבנאי המלא שלך (עם תוספת תאריך)
-    public Post(String id, String description, String author, String target, String imageUrl,String secretMessage) {
-        this.id = id;
+    // פעולה בונה (Constructor) מלאה ומסודרת
+    public Post(String description, String author, String target, String imageUrl, Map<String, String> userMessages) {
         this.description = description;
         this.author = author;
         this.target = target;
         this.imageUrl = imageUrl;
-        this.createdAt = java.time.LocalDateTime.now().toString();
-        this.secretMessage = secretMessage;
-
-
-
+        this.userMessages = userMessages;
+        this.createdAt = LocalDateTime.now().toString(); // הגדרת זמן יצירה אוטומטית
     }
 
-    public Post(String number, String פוסט_חדש_מהבוקר, String אבי, String world, String url) {
-    }
+    // Constructor ריק עבור Spring/MongoDB
+    public Post() {}
 
-    public String getSecretMessage() { return secretMessage; }
-    public void setSecretMessage(String secretMessage) { this.secretMessage = secretMessage; }
-    // 4. Getters & Setters (חיוני! בלי זה הנתונים לא יישלחו ל-React)
+    // --- Getters & Setters ---
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -50,4 +51,7 @@ public class Post {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public Map<String, String> getUserMessages() { return userMessages; }
+    public void setUserMessages(Map<String, String> userMessages) { this.userMessages = userMessages; }
 }
