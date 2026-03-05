@@ -1,6 +1,7 @@
 package com.photoServer.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,9 @@ public class Group {
     private String id;
     private String name;
     private String creator;
-
+    // בתוך Group.java
+    @Transient // אומר ל-Hibernate לא לשמור את זה בטבלה, זה רק לצורך ה-JSON
+    private int unreadCount;
     // השארנו רק רשימה אחת של Member
     private List<Member> members = new ArrayList<>();
 
@@ -23,7 +26,9 @@ public class Group {
         // בדרך כלל היוצר הוא גם החבר הראשון (ומנהל)
         this.members.add(new Member(creator, true));
     }
-
+    // Getter & Setter
+    public int getUnreadCount() { return unreadCount; }
+    public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
     // Getters and Setters
     public String getId() { return id; }
     public String getName() { return name; }
@@ -37,16 +42,22 @@ public class Group {
     public static class Member {
         private String username;
         private boolean isAdmin;
-
+        // בתוך Group.java
+        @Transient // אומר ל-Hibernate לא לשמור את זה בטבלה, זה רק לצורך ה-JSON
+        private int unreadCount;
         public Member() {}
         public Member(String username, boolean isAdmin) {
             this.username = username;
             this.isAdmin = isAdmin;
         }
-
+        // בתוך Group.java -> מחלקת Member
+        public void setIsAdmin(boolean isAdmin) { // הוספת 'is' לשם המילה
+            this.isAdmin = isAdmin;
+        }
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
         public boolean isAdmin() { return isAdmin; }
         public void setAdmin(boolean admin) { isAdmin = admin; }
+
     }
 }

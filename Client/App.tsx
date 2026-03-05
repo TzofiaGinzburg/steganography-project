@@ -14,12 +14,11 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import MenuScreen from './src/screens/MenuScreen';
 import MyGroups from './src/screens/MyGroups';
 import GroupDetailScreen from './src/screens/GroupDetailScreen';
-import MenuNew from './src/screens/MenuNew';
 import CreatePostScreen from './src/screens/CreatePostScreen'; // המסך החדש
 import GlobalFeedScreen from './src/screens/GlobalFeedScreen'; // המסך החדש
 
 import CreateGroupScreen from './src/screens/CreateGroupScreen'; // המסך החדש
-
+import PostDetailsScreen from './src/screens/PostDetailsScreen';
 // ואז בתוך ה-Stack:
 const Stack = createStackNavigator();
 
@@ -37,7 +36,7 @@ export default function App() {
          <Stack.Screen name="GroupDetailScreen" component={ GroupDetailScreen} />
            {/* מסך יצירת פוסט סטגנוגרפי */}
         <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'יצירת פוסט חדש' }} />
-        {/* השורה שחסרה לך: */}
+     
   <Stack.Screen 
     name="CreateGroup" 
     component={CreateGroupScreen} 
@@ -45,7 +44,16 @@ export default function App() {
   />
         {/* מסך הפיד (עולם או קבוצה) */}
         <Stack.Screen name="GlobalFeed" component={GlobalFeedScreen} options={{ title: 'צפייה בפוסטים' }} />
-{/* <Stack.Screen name="MenuNew" component={MenuNew}/> */}
+       {/* הוסף את השורה הזו כאן! */}
+  <Stack.Screen 
+    name="PostDetails" 
+    component={PostDetailsScreen} 
+    options={{ 
+      title: 'פרטי פוסט', 
+      headerTitleAlign: 'center',
+      headerStyle: { backgroundColor: '#fff' }
+    }} 
+  />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

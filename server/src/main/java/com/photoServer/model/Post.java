@@ -50,8 +50,11 @@ public class Post {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public String getCreatedAt() { return createdAt; }
-    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
-
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        if (createdAt != null) {
+            this.createdAt = createdAt.toString(); // הופך את התאריך לטקסט
+        }
+    }
     public Map<String, String> getUserMessages() { return userMessages; }
     public void setUserMessages(Map<String, String> userMessages) { this.userMessages = userMessages; }
 }

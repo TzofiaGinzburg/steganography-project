@@ -3,6 +3,7 @@ package com.photoServer.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.photoServer.model.Post;
+import com.photoServer.model.PostComment;
 import com.photoServer.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +62,8 @@ public class PostController {
 
             // 4. יצירת הפוסט עם ה-Constructor החדש הכולל את המפה
             Post newPost = new Post(description, senderUsername, target, fileUrl, userMessages);
-
+// בתוך PostController.java תחת המתודה createPost
+            newPost.setCreatedAt(LocalDateTime.now()); // <--- הוסף את השורה הזו לפני postService.savePost
             postService.savePost(newPost);
 
             System.out.println("✅ פוסט חדש נשמר עם " + userMessages.size() + " מסרים סודיים.");
@@ -80,5 +83,21 @@ public class PostController {
     @GetMapping("/feed/{target}")
     public ResponseEntity<List<Post>> getFeed(@PathVariable String target) {
         return ResponseEntity.ok(postService.getAllPostsByTarget(target));
+    }
+
+    @GetMapping("/all") // בלי /api ובלי /posts כאן, כי זה כבר מוגדר למעלה במחלקה
+    public ResponseEntity<List<Post>> getAllPosts() {
+        System.out.println("📬 הקריאה הגיעה לשרת!");
+        return ResponseEntity.ok(postService.getAllPosts());
+    }
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<List<PostComment>> getComments(@PathVariable String postId) {
+        return ResponseEntity.ok(postService.getCommentsByPostId(postId));
+    }
+
+    @PostMapping("/{postId}/comments")
+    public ResponseEntity<PostComment> addComment(@PathVariable String postId, @RequestBody Map<String, String> payload) {
+        PostComment comment = new PostComment(postId, payload.get("author"), payload.get("text"));
+        return ResponseEntity.ok(postService.saveComment(comment));
     }
 }

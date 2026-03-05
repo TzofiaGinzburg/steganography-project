@@ -1,346 +1,248 @@
-// // // // // // import React, { useState } from 'react';
-// // // // // // import { 
-// // // // // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-// // // // // //   ScrollView, Alert, ActivityIndicator 
-// // // // // // } from 'react-native';
-// // // // // // import { SafeAreaView } from 'react-native-safe-area-context';
-// // // // // // import { Picker } from '@react-native-picker/picker';
-// // // // // // import * as DocumentPicker from '@react-native-documents/picker';
-// // // // // // import { BASE_URL } from '../api/Constants';
-
-// // // // // // const CreatePostScreen = ({ route, navigation }: any) => {
-// // // // // //   // מקבלים את היעד מה-MenuScreen
-// // // // // //   const { target } = route.params || { target: 'world' };
-
-// // // // // //   const [loading, setLoading] = useState(false);
-// // // // // //   const [description, setDescription] = useState('');
-// // // // // //   const [secretMessage, setSecretMessage] = useState('');
-// // // // // //   const [file, setFile] = useState<any>(null); // שונה מ-DocumentPickerResponse ל-any בגלל המעבר ל-Expo
-// // // // // //   const [selectedGroupId, setSelectedGroupId] = useState('');
-
-// // // // // //   const myGroups = [
-// // // // // //     { id: '1', name: 'המשפחה שלי' },
-// // // // // //     { id: '2', name: 'חברי לימודים' },
-// // // // // //     { id: '3', name: 'צוות פיתוח' },
-// // // // // //   ];
-
-// // // // // //   const pickFile = async () => {
-// // // // // //   try {
-// // // // // //     const results = await DocumentPicker.pick({
-// // // // // //       type: [DocumentPicker.types.images, DocumentPicker.types.video, DocumentPicker.types.audio],
-// // // // // //     });
-
-// // // // // //     const selectedFile = results[0];
-// // // // // //     setFile({
-// // // // // //       uri: selectedFile.uri,
-// // // // // //       name: selectedFile.name,
-// // // // // //       type: selectedFile.type,
-// // // // // //       size: selectedFile.size
-// // // // // //     });
-
-// // // // // //   }  catch (err: any) {
-// // // // // //     // במקום isCancel, אנחנו בודקים את קוד השגיאה ישירות
-// // // // // //     if (err?.code === 'DOCUMENT_PICKER_CANCELED' || err?.message?.includes('cancel')) {
-// // // // // //       console.log('המשתמש ביטל את הבחירה');
-// // // // // //     } else {
-// // // // // //       console.error("שגיאה בבחירת קובץ:", err);
-// // // // // //       Alert.alert("שגיאה", "נכשלה בחירת הקובץ");
-// // // // // //     }
-// // // // // //   }
-// // // // // // };
-// // // // // //   const handlePublish = async () => {
-// // // // // //     if (!file) {
-// // // // // //       return Alert.alert("שגיאה", "אנא בחר קובץ להעלאה");
-// // // // // //     }
-// // // // // //     if (target === 'group' && !selectedGroupId) {
-// // // // // //       return Alert.alert("שגיאה", "אנא בחר קבוצת יעד");
-// // // // // //     }
-
-// // // // // //     setLoading(true);
-
-// // // // // //     const formData = new FormData();
-// // // // // //     formData.append('file', {
-// // // // // //       uri: file.uri,
-// // // // // //       type: file.type,
-// // // // // //       name: file.name,
-// // // // // //     } as any);
-
-// // // // // //     formData.append('description', description);
-// // // // // //     formData.append('secretMessage', secretMessage);
-// // // // // //     formData.append('target', target === 'world' ? 'world' : selectedGroupId);
-
-// // // // // //     try {
-// // // // // //       const response = await fetch('http://10.0.2.2:8080/api/posts/create', {
-// // // // // //         method: 'POST',
-// // // // // //         body: formData,
-// // // // // //         headers: {
-// // // // // //           'Accept': 'application/json',
-// // // // // //         },
-// // // // // //       });
-
-// // // // // //       if (response.ok) {
-// // // // // //         Alert.alert("הצלחה!", "הפוסט נשמר בשרת");
-// // // // // //         navigation.goBack();
-// // // // // //       } else {
-// // // // // //         const errorData = await response.text();
-// // // // // //         console.log("Server Error:", errorData);
-// // // // // //         Alert.alert("שגיאה", "השרת נכשל בעיבוד הפוסט");
-// // // // // //       }
-// // // // // //     } catch (error) {
-// // // // // //       console.error("Fetch Error:", error);
-// // // // // //       Alert.alert("שגיאה", "לא ניתן להתחבר לשרת. וודא ש-Java רץ");
-// // // // // //     } finally {
-// // // // // //       setLoading(false);
-// // // // // //     }
-// // // // // //   };
-
-// // // // // //   return (
-// // // // // //     <SafeAreaView style={styles.container}>
-// // // // // //       <ScrollView contentContainerStyle={styles.scrollContent}>
-// // // // // //         <Text style={styles.title}>יצירת פוסט חדש ({target === 'world' ? 'ציבורי' : 'לקבוצה'})</Text>
-
-// // // // // //         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-// // // // // //           <Text style={styles.filePickerText}>
-// // // // // //             {file ? `📎 קובץ נבחר: ${file.name}` : "📁 לחץ לבחירת תמונה / וידאו / שמע"}
-// // // // // //           </Text>
-// // // // // //         </TouchableOpacity>
-
-// // // // // //         <Text style={styles.label}>תיאור גלוי (יוצג לכולם):</Text>
-// // // // // //         <TextInput
-// // // // // //           style={styles.input}
-// // // // // //           placeholder="מה רואים בקובץ?"
-// // // // // //           multiline
-// // // // // //           onChangeText={setDescription}
-// // // // // //         />
-
-// // // // // //         <Text style={[styles.label, { color: '#D32F2F' }]}>🤐 מסר סודי (יוטמע בתוך הקובץ):</Text>
-// // // // // //         <TextInput
-// // // // // //           style={[styles.input, styles.secretInput]}
-// // // // // //           placeholder="הכנס את המסר שרק חברי הקבוצה יראו..."
-// // // // // //           onChangeText={setSecretMessage}
-// // // // // //         />
-
-// // // // // //         {target === 'group' && (
-// // // // // //           <View style={styles.pickerSection}>
-// // // // // //             <Text style={styles.label}>בחר קבוצה:</Text>
-// // // // // //             <View style={styles.pickerWrapper}>
-// // // // // //               <Picker
-// // // // // //                 selectedValue={selectedGroupId}
-// // // // // //                 onValueChange={(value) => setSelectedGroupId(value)}
-// // // // // //               >
-// // // // // //                 <Picker.Item label="בחר קבוצה מהרשימה..." value="" />
-// // // // // //                 {myGroups.map(group => (
-// // // // // //                   <Picker.Item key={group.id} label={group.name} value={group.id} />
-// // // // // //                 ))}
-// // // // // //               </Picker>
-// // // // // //             </View>
-// // // // // //           </View>
-// // // // // //         )}
-
-// // // // // //         <TouchableOpacity 
-// // // // // //           style={styles.submitButton} 
-// // // // // //           onPress={handlePublish}
-// // // // // //           disabled={loading}
-// // // // // //         >
-// // // // // //           {loading ? (
-// // // // // //             <ActivityIndicator color="#fff" />
-// // // // // //           ) : (
-// // // // // //             <Text style={styles.submitButtonText}>בצע סטגנוגרפיה ופרסם 🚀</Text>
-// // // // // //           )}
-// // // // // //         </TouchableOpacity>
-// // // // // //       </ScrollView>
-// // // // // //     </SafeAreaView>
-// // // // // //   );
-// // // // // // };
-
-// // // // // // const styles = StyleSheet.create({
-// // // // // //   container: { flex: 1, backgroundColor: '#fff' },
-// // // // // //   scrollContent: { padding: 20 },
-// // // // // //   title: { fontSize: 22, fontWeight: 'bold', color: '#6200EE', textAlign: 'center', marginBottom: 20 },
-// // // // // //   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, textAlign: 'right' },
-// // // // // //   filePicker: { 
-// // // // // //     height: 120, 
-// // // // // //     borderWidth: 2, 
-// // // // // //     borderColor: '#6200EE', 
-// // // // // //     borderStyle: 'dashed', 
-// // // // // //     borderRadius: 12, 
-// // // // // //     justifyContent: 'center', 
-// // // // // //     alignItems: 'center', 
-// // // // // //     marginBottom: 20,
-// // // // // //     backgroundColor: '#F3E5F5'
-// // // // // //   },
-// // // // // //   filePickerText: { color: '#6200EE', fontWeight: 'bold', textAlign: 'center', padding: 10 },
-// // // // // //   input: { 
-// // // // // //     backgroundColor: '#F5F5F5', 
-// // // // // //     borderRadius: 8, 
-// // // // // //     padding: 12, 
-// // // // // //     textAlign: 'right', 
-// // // // // //     marginBottom: 20,
-// // // // // //     fontSize: 16,
-// // // // // //     borderWidth: 1,
-// // // // // //     borderColor: '#E0E0E0'
-// // // // // //   },
-// // // // // //   secretInput: { borderColor: '#FFCDD2', borderLeftWidth: 5 },
-// // // // // //   pickerSection: { marginBottom: 20 },
-// // // // // //   pickerWrapper: { backgroundColor: '#F5F5F5', borderRadius: 8, borderWidth: 1, borderColor: '#E0E0E0' },
-// // // // // //   submitButton: { 
-// // // // // //     backgroundColor: '#6200EE', 
-// // // // // //     padding: 18, 
-// // // // // //     borderRadius: 12, 
-// // // // // //     alignItems: 'center', 
-// // // // // //     marginTop: 10,
-// // // // // //     elevation: 4
-// // // // // //   },
-// // // // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
-// // // // // // });
-
-// // // // // // export default CreatePostScreen;
 // // // // // // import React, { useState, useEffect } from 'react';
 // // // // // // import { 
 // // // // // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
 // // // // // //   ScrollView, Alert, ActivityIndicator, Image 
 // // // // // // } from 'react-native';
 // // // // // // import { SafeAreaView } from 'react-native-safe-area-context';
-// // // // // // import { Picker } from '@react-native-picker/picker';
-
-// // // // // //  import * as DocumentPicker from '@react-native-documents/picker';
-// // // // // // // import * as DocumentPicker from 'expo-document-picker'; // מומלץ לאקספו
+// // // // // // import * as DocumentPicker from '@react-native-documents/picker';
 // // // // // // import { BASE_URL } from '../api/Constants';
 
 // // // // // // const CreatePostScreen = ({ route, navigation }: any) => {
-// // // // // //   const { userName, target } = route.params || { userName: 'אורח', target: 'world' };
+// // // // // //   // Extracting data from navigation params
+// // // // // //   const { target, groupId, groupName, userName } = route.params || {};
+
+// // // // // //   // --- ENGLISH CONSOLE LOGS ---
+// // // // // //   useEffect(() => {
+// // // // // //     console.log("======= NEW POST SCREEN LOADED =======");
+// // // // // //     console.log("Current User:", userName ? userName : "MISSING USERNAME");
+// // // // // //     console.log("Target Group ID:", groupId);
+// // // // // //     console.log("Target Type:", target);
+// // // // // //     console.log("======================================");
+// // // // // //   }, []);
 
 // // // // // //   const [loading, setLoading] = useState(false);
 // // // // // //   const [description, setDescription] = useState('');
 // // // // // //   const [secretMessage, setSecretMessage] = useState('');
 // // // // // //   const [file, setFile] = useState<any>(null);
-// // // // // //   const [selectedGroupId, setSelectedGroupId] = useState('');
-// // // // // //   const [myGroups, setMyGroups] = useState<any[]>([]);
+// // // // // // // --- States חדשים לחיפוש חברים ---
+// // // // // //   const [groupMembers, setGroupMembers] = useState<any[]>([]); // רשימת כל החברים
+// // // // // //   const [filteredMembers, setFilteredMembers] = useState<any[]>([]); // רשימה מסוננת לחיפוש
+// // // // // //   const [searchQuery, setSearchQuery] = useState(''); // טקסט החיפוש
+// // // // // //   const [selectedRecipient, setSelectedRecipient] = useState<any>(null); // החבר שנבחר
 
-// // // // // //   // 1. שליפת הקבוצות האמיתיות של המשתמש מהשרת
-// // // // // //   useEffect(() => {
-// // // // // //     const fetchGroups = async () => {
-// // // // // //       try {
-// // // // // //         const response = await fetch(`${BASE_URL}/groups/my-groups/${userName}`);
-// // // // // //         const data = await response.json();
-// // // // // //         setMyGroups(data);
-// // // // // //       } catch (e) {
-// // // // // //         console.error("Failed to fetch groups", e);
+// // // // // //  useEffect(() => {
+// // // // // //     if (target === 'group') {
+// // // // // //       if (!groupId) {
+// // // // // //         Alert.alert("שגיאה", "groupId חסר, לכן אי אפשר לשלוף חברים");
+// // // // // //         return;
 // // // // // //       }
-// // // // // //     };
-// // // // // //     if (target === 'group') fetchGroups();
-// // // // // //   }, []);
 
-// // // // // //   const pickFile = async () => {
-// // // // // //   try {
-// // // // // //     const results = await DocumentPicker.pick({
-// // // // // //       // שימוש ב-types מתוך הספרייה
-// // // // // //       type: [
-// // // // // //         DocumentPicker.types.images,
-// // // // // //         DocumentPicker.types.video,
-// // // // // //         DocumentPicker.types.audio,
-// // // // // //       ],
-// // // // // //     });
+// // // // // //       const url = `${BASE_URL}/api/groups/${groupId}/members`;
+      
+// // // // // //       // ההדפסה הזו תעזור לנו לראות את הכתובת המדויקת
+// // // // // //       console.log("Fetching from:", url); 
 
-// // // // // //     const res = results[0];
-// // // // // //     setFile({
-// // // // // //       uri: res.uri,
-// // // // // //       type: res.type,
-// // // // // //       name: res.name,
-// // // // // //     });
-
-// // // // // //   } catch (err: any) {
-// // // // // //     // התיקון ל"אדום": בודקים אם הקוד הוא 'PICKER_CANCELLED'
-// // // // // //     if (err?.code === 'PICKER_CANCELLED') {
-// // // // // //       console.log('המשתמש ביטל את הבחירה');
-// // // // // //     } else {
-// // // // // //       console.error('שגיאה בבחירת קובץ:', err);
-// // // // // //       Alert.alert("שגיאה", "נכשלה בחירת הקובץ");
+// // // // // //       fetch(url)
+// // // // // //         .then(res => {
+// // // // // //           if (res.status === 404) {
+// // // // // //              // אם זה קופץ, הכתובת פשוט לא נכונה בשרת
+// // // // // //              Alert.alert("שגיאה 404", "השרת לא מכיר את הכתובת: " + url);
+// // // // // //              throw new Error("Endpoint not found");
+// // // // // //           }
+// // // // // //           return res.json();
+// // // // // //         })
+// // // // // //         .then(data => {
+// // // // // //           setGroupMembers(data);
+// // // // // //           setFilteredMembers(data);
+// // // // // //         })
+// // // // // //         .catch(err => console.error("Error:", err));
 // // // // // //     }
-// // // // // //   }
-// // // // // // };
+// // // // // // }, [groupId, target]);
+// // // // // //   // לוגיקת החיפוש והסינון
+// // // // // //   const handleUserSearch = (text: string) => {
+// // // // // //     setSearchQuery(text);
+// // // // // //     if (text.length > 0) {
+// // // // // //       const filtered = groupMembers.filter(m => 
+// // // // // //         m.username && m.username.toLowerCase().includes(text.toLowerCase())
+// // // // // //       );
+// // // // // //       setFilteredMembers(filtered);
+// // // // // //     } else {
+// // // // // //       setFilteredMembers(groupMembers);
+// // // // // //     }
+// // // // // //     // אם המשתמש משנה את הטקסט, נבטל את הבחירה הקודמת
+// // // // // //     if (selectedRecipient && text !== selectedRecipient.username) {
+// // // // // //       setSelectedRecipient(null);
+// // // // // //     }
+// // // // // //   };
+// // // // // //   const pickFile = async () => {
+// // // // // //     try {
+// // // // // //       const results = await DocumentPicker.pick({
+// // // // // //         type: [DocumentPicker.types.images],
+// // // // // //       });
+// // // // // //       const selectedFile = results[0];
+// // // // // //       setFile({
+// // // // // //         uri: selectedFile.uri,
+// // // // // //         name: selectedFile.name,
+// // // // // //         type: selectedFile.type,
+// // // // // //       });
+// // // // // //       console.log("FILE SELECTED:", selectedFile.name);
+// // // // // //     } catch (err: any) {
+// // // // // //       if (err?.code !== 'PICKER_CANCELLED') {
+// // // // // //         console.log("PICKER ERROR:", err);
+// // // // // //       }
+// // // // // //     }
+// // // // // //   };
 
 // // // // // //   const handlePublish = async () => {
-// // // // // //     if (!file) return Alert.alert("שגיאה", "אנא בחר קובץ");
-// // // // // //     if (target === 'group' && !selectedGroupId) return Alert.alert("שגיאה", "בחר קבוצה");
+// // // // // //     // Validation
+// // // // // //     if (!file) {
+// // // // // //         return Alert.alert("Wait!", "Please select an image first.");
+// // // // // //     }
+// // // // // //     if (!userName || userName === 'אורח') {
+// // // // // //         console.log("CRITICAL ERROR: 'userName' is undefined or Guest.");
+// // // // // //         return Alert.alert("Auth Error", "User name not found. Go back and try again.");
+// // // // // //     }
 
 // // // // // //     setLoading(true);
+// // // // // //     console.log("--- PUBLISHING START ---");
+// // // // // //     console.log("Sender:", userName);
+
 // // // // // //     const formData = new FormData();
+    
+// // // // // //     // Adding the file
 // // // // // //     formData.append('file', {
 // // // // // //       uri: file.uri,
-// // // // // //       type: file.type,
-// // // // // //       name: file.name,
+// // // // // //       type: file.type || 'image/jpeg',
+// // // // // //       name: file.name || 'upload.jpg',
 // // // // // //     } as any);
 
-// // // // // //     formData.append('senderUsername', userName);
+// // // // // //     // Adding metadata
 // // // // // //     formData.append('description', description);
-// // // // // //     formData.append('secretMessage', secretMessage);
-// // // // // //     formData.append('groupId', target === 'world' ? 'world' : selectedGroupId);
+// // // // // //     formData.append('senderUsername', userName); // The field expected by Java
+// // // // // //     formData.append('target', target === 'group' ? groupId : 'world');
+
+// // // // // //     // Handling secret message (Steganography data)
+// // // // // //     if (secretMessage) {
+// // // // // //       const messagesMap = { [userName]: secretMessage };
+// // // // // //       formData.append('userMessagesJson', JSON.stringify(messagesMap));
+// // // // // //       console.log("SECRET MESSAGE ATTACHED:", secretMessage);
+// // // // // //     }
 
 // // // // // //     try {
 // // // // // //       const response = await fetch(`${BASE_URL}/posts/create`, {
 // // // // // //         method: 'POST',
 // // // // // //         body: formData,
-// // // // // //         headers: { 'Accept': 'application/json' },
+// // // // // //         headers: {
+// // // // // //           'Accept': 'application/json',
+// // // // // //           // Note: Content-Type must NOT be set when using FormData
+// // // // // //         },
 // // // // // //       });
 
 // // // // // //       if (response.ok) {
-// // // // // //         Alert.alert("הצלחה!", "הפוסט פורסם בקבוצה 🚀");
+// // // // // //         console.log("✅ SERVER SUCCESS: Post published");
+// // // // // //         Alert.alert("Success", "Post published successfully!");
 // // // // // //         navigation.goBack();
+// // // // // //       } else {
+// // // // // //         const errorText = await response.text();
+// // // // // //         console.log("❌ SERVER REJECTED:", errorText);
+// // // // // //         Alert.alert("Failed", "Server error. Check logs.");
 // // // // // //       }
 // // // // // //     } catch (error) {
-// // // // // //       Alert.alert("שגיאה", "החיבור לשרת נכשל");
+// // // // // //       console.error("❌ CONNECTION ERROR:", error);
+// // // // // //       Alert.alert("Connection Error", "Is your server running?");
 // // // // // //     } finally {
 // // // // // //       setLoading(false);
+// // // // // //       console.log("--- PUBLISHING END ---");
 // // // // // //     }
 // // // // // //   };
 
 // // // // // //   return (
 // // // // // //     <SafeAreaView style={styles.container}>
 // // // // // //       <ScrollView contentContainerStyle={styles.scrollContent}>
-// // // // // //         <Text style={styles.title}>פרסום פוסט חדש</Text>
+        
+// // // // // //         <Text style={styles.title}>New Post</Text>
+// // // // // //         <Text style={styles.userLabel}>Logged in as: <Text style={styles.boldText}>{userName || "Unknown"}</Text></Text>
 
-// // // // // //         {/* --- תצוגה מקדימה של הקובץ --- */}
+// // // // // //         {/* Media Picker */}
 // // // // // //         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-// // // // // //           {file && file.type.includes('image') ? (
+// // // // // //           {file ? (
 // // // // // //             <Image source={{ uri: file.uri }} style={styles.previewImage} />
-// // // // // //           ) : file ? (
-// // // // // //             <View style={styles.fileIconContainer}>
-// // // // // //                <Text style={{fontSize: 40}}>📄</Text>
-// // // // // //                <Text style={styles.filePickerText}>{file.name}</Text>
-// // // // // //             </View>
 // // // // // //           ) : (
-// // // // // //             <Text style={styles.filePickerText}>📁 לחץ לבחירת מדיה</Text>
+// // // // // //             <View style={styles.placeholderBox}>
+// // // // // //               <Text style={styles.icon}>📷</Text>
+// // // // // //               <Text style={styles.filePickerText}>Tap to select image</Text>
+// // // // // //             </View>
 // // // // // //           )}
 // // // // // //         </TouchableOpacity>
 
-// // // // // //         {/* בחירת קבוצה רק אם המשתמש ביקש לשלוח לקבוצה */}
-// // // // // //         {target === 'group' && (
-// // // // // //           <View style={styles.pickerSection}>
-// // // // // //             <Text style={styles.label}>בחר קבוצה מהרשימה שלי:</Text>
-// // // // // //             <View style={styles.pickerWrapper}>
-// // // // // //               <Picker
-// // // // // //                 selectedValue={selectedGroupId}
-// // // // // //                 onValueChange={(value) => setSelectedGroupId(value)}
-// // // // // //               >
-// // // // // //                 <Picker.Item label="לחץ לבחירת קבוצה..." value="" />
-// // // // // //                 {myGroups.map(g => (
-// // // // // //                   <Picker.Item key={g.id} label={g.name || g.groupName} value={g.id} />
-// // // // // //                 ))}
-// // // // // //               </Picker>
-// // // // // //             </View>
-// // // // // //           </View>
-// // // // // //         )}
+// // // // // //         {/* Public Description */}
+// // // // // //         <Text style={styles.label}>Caption</Text>
+// // // // // //         <TextInput 
+// // // // // //             style={styles.input} 
+// // // // // //             placeholder="Write a caption..." 
+// // // // // //             onChangeText={setDescription}
+// // // // // //             placeholderTextColor="#999"
+// // // // // //         />
+// // // // // // {/* --- חלק 1: תיבת חיפוש ורשימת חברים --- */}
+// // // // // // {target === 'group' && (
+// // // // // //   <View style={{ marginBottom: 20 }}>
+// // // // // //     <Text style={styles.label}>בחר למי מיועד המסר (חיפוש חבר)</Text>
+// // // // // //     <TextInput
+// // // // // //       style={styles.input}
+// // // // // //       placeholder="הקלד שם חבר..."
+// // // // // //       value={searchQuery}
+// // // // // //       onChangeText={handleUserSearch} // הפונקציה שמסננת
+// // // // // //       placeholderTextColor="#999"
+// // // // // //     />
+    
+// // // // // //     {/* הצגת רשימת התוצאות רק כשמתחילים להקליד ועדיין לא נבחר חבר */}
+// // // // // //     {searchQuery.length > 0 && !selectedRecipient && (
+// // // // // //       <View style={styles.dropdown}>
+// // // // // //         {filteredMembers.map((member: any) => (
+// // // // // //           <TouchableOpacity 
+// // // // // //             key={member.username} 
+// // // // // //             style={styles.memberItem}
+// // // // // //             onPress={() => {
+// // // // // //               setSelectedRecipient(member); // שומר את החבר שנבחר
+// // // // // //               setSearchQuery(member.username); // מעדכן את השדה לשם הנבחר
+// // // // // //             }}
+// // // // // //           >
+// // // // // //             <Text style={{ color: '#333', fontWeight: 'bold' }}>{member.username}</Text>
+// // // // // //           </TouchableOpacity>
+// // // // // //         ))}
+// // // // // //       </View>
+// // // // // //     )}
 
-// // // // // //         <Text style={styles.label}>תיאור הפוסט:</Text>
-// // // // // //         <TextInput style={styles.input} placeholder="ספר משהו על הקובץ..." onChangeText={setDescription} />
+// // // // // //     {/* הצגת אישור שהחבר נבחר */}
+// // // // // //     {selectedRecipient && (
+// // // // // //       <Text style={styles.selectedText}>
+// // // // // //         המסר יוסתר עבור: {selectedRecipient.username} ✅
+// // // // // //       </Text>
+// // // // // //     )}
+// // // // // //   </View>
+// // // // // // )}
+// // // // // //         {/* Hidden Message Section */}
+// // // // // //         <Text style={[styles.label, { color: '#D32F2F' }]}>Secret Message (Hidden in image)</Text>
+// // // // // //         <TextInput 
+// // // // // //             style={[styles.input, styles.secretInput]} 
+// // // // // //             placeholder="Type secret message here..." 
+// // // // // //             onChangeText={setSecretMessage}
+// // // // // //             placeholderTextColor="#FFCDD2"
+// // // // // //         />
 
-// // // // // //         <Text style={[styles.label, {color: '#D32F2F'}]}>🤐 מסר סטגנוגרפי (יוחבא בקובץ):</Text>
-// // // // // //         <TextInput style={[styles.input, styles.secretInput]} placeholder="הודעה שרק חברי הקבוצה יגלו..." onChangeText={setSecretMessage} />
-
-// // // // // //         <TouchableOpacity style={styles.submitButton} onPress={handlePublish} disabled={loading}>
-// // // // // //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>פרסם פוסט 🚀</Text>}
+// // // // // //         {/* Action Buttons */}
+// // // // // //         <TouchableOpacity 
+// // // // // //             style={[styles.submitButton, loading && { backgroundColor: '#ccc' }]} 
+// // // // // //             onPress={handlePublish} 
+// // // // // //             disabled={loading}
+// // // // // //         >
+// // // // // //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Publish Now 🚀</Text>}
 // // // // // //         </TouchableOpacity>
+
+// // // // // //         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
+// // // // // //           <Text style={styles.cancelButtonText}>Discard</Text>
+// // // // // //         </TouchableOpacity>
+
 // // // // // //       </ScrollView>
 // // // // // //     </SafeAreaView>
 // // // // // //   );
@@ -348,27 +250,81 @@
 
 // // // // // // const styles = StyleSheet.create({
 // // // // // //   container: { flex: 1, backgroundColor: '#fff' },
-// // // // // //   scrollContent: { padding: 20 },
-// // // // // //   title: { fontSize: 22, fontWeight: 'bold', color: '#6200EE', textAlign: 'center', marginBottom: 20 },
+// // // // // //   scrollContent: { padding: 25 },
+// // // // // //   title: { fontSize: 28, fontWeight: 'bold', color: '#333', marginBottom: 5, textAlign: 'center' },
+// // // // // //   userLabel: { textAlign: 'center', marginBottom: 25, color: '#666', fontSize: 14 },
+// // // // // //   boldText: { fontWeight: 'bold', color: '#075E54' },
+// // // // // //   label: { fontSize: 16, fontWeight: '600', marginBottom: 8, color: '#444' },
 // // // // // //   filePicker: { 
-// // // // // //     height: 200, borderWidth: 2, borderColor: '#6200EE', borderStyle: 'dashed', 
-// // // // // //     borderRadius: 15, justifyContent: 'center', alignItems: 'center', 
-// // // // // //     marginBottom: 20, backgroundColor: '#F3E5F5', overflow: 'hidden'
+// // // // // //     height: 220, 
+// // // // // //     borderWidth: 2, 
+// // // // // //     borderColor: '#075E54', 
+// // // // // //     borderStyle: 'dashed', 
+// // // // // //     borderRadius: 15, 
+// // // // // //     marginBottom: 25, 
+// // // // // //     backgroundColor: '#f9f9f9', 
+// // // // // //     overflow: 'hidden' 
 // // // // // //   },
-// // // // // //   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-// // // // // //   fileIconContainer: { alignItems: 'center' },
-// // // // // //   filePickerText: { color: '#6200EE', fontWeight: 'bold', marginTop: 10 },
-// // // // // //   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, textAlign: 'right' },
-// // // // // //   input: { backgroundColor: '#F5F5F5', borderRadius: 8, padding: 12, textAlign: 'right', marginBottom: 15, borderWidth: 1, borderColor: '#E0E0E0' },
-// // // // // //   secretInput: { borderColor: '#FFCDD2', borderLeftWidth: 5 },
-// // // // // //   pickerSection: { marginBottom: 20 },
-// // // // // //   pickerWrapper: { backgroundColor: '#F5F5F5', borderRadius: 8, borderWidth: 1, borderColor: '#E0E0E0' },
-// // // // // //   submitButton: { backgroundColor: '#6200EE', padding: 18, borderRadius: 12, alignItems: 'center' },
-// // // // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+// // // // // //   placeholderBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+// // // // // //   previewImage: { width: '100%', height: '100%' },
+// // // // // //   icon: { fontSize: 40, marginBottom: 10 },
+// // // // // //   filePickerText: { color: '#075E54', fontWeight: 'bold' },
+// // // // // //   input: { 
+// // // // // //     backgroundColor: '#fff', 
+// // // // // //     borderRadius: 10, 
+// // // // // //     padding: 15, 
+// // // // // //     marginBottom: 20, 
+// // // // // //     borderWidth: 1, 
+// // // // // //     borderColor: '#eee',
+// // // // // //     fontSize: 16,
+// // // // // //     color: '#000'
+// // // // // //   },
+// // // // // //   secretInput: { borderColor: '#FFCDD2', color: '#B71C1C' },
+// // // // // //   submitButton: { 
+// // // // // //     backgroundColor: '#075E54', 
+// // // // // //     padding: 18, 
+// // // // // //     borderRadius: 12, 
+// // // // // //     alignItems: 'center',
+// // // // // //     shadowColor: '#000',
+// // // // // //     shadowOffset: { width: 0, height: 2 },
+// // // // // //     shadowOpacity: 0.2,
+// // // // // //     elevation: 4
+// // // // // //   },
+// // // // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+// // // // // //   cancelButton: { marginTop: 20, alignItems: 'center' },
+// // // // // //   cancelButtonText: { color: '#999', fontSize: 14 },
+// // // // // //   // --- תוסיף את אלו בסוף ה-StyleSheet ---
+// // // // // //   dropdown: {
+// // // // // //     backgroundColor: '#fff',
+// // // // // //     borderWidth: 1,
+// // // // // //     borderColor: '#ddd',
+// // // // // //     borderRadius: 8,
+// // // // // //     marginTop: 2,
+// // // // // //     marginBottom: 10,
+// // // // // //     maxHeight: 150, // גובה מקסימלי לרשימה כדי שלא תתפוס את כל המסך
+// // // // // //     elevation: 5, // צל באנדרואיד
+// // // // // //     shadowColor: '#000', // צל באייפון
+// // // // // //     shadowOffset: { width: 0, height: 2 },
+// // // // // //     shadowOpacity: 0.1,
+// // // // // //     zIndex: 1000, // גורם לרשימה לצוף מעל שדות אחרים
+// // // // // //   },
+// // // // // //   memberItem: {
+// // // // // //     padding: 12,
+// // // // // //     borderBottomWidth: 1,
+// // // // // //     borderBottomColor: '#f0f0f0',
+// // // // // //   },
+// // // // // //   selectedText: {
+// // // // // //     color: '#075E54', // צבע ירוק כהה (כמו וואטסאפ)
+// // // // // //     fontSize: 13,
+// // // // // //     fontWeight: 'bold',
+// // // // // //     marginTop: 5,
+// // // // // //     marginBottom: 10,
+// // // // // //     textAlign: 'right', // מתאים לעברית
+// // // // // //   },
 // // // // // // });
 
 // // // // // // export default CreatePostScreen;
-// // // // // import React, { useState } from 'react';
+// // // // // import React, { useState, useEffect } from 'react';
 // // // // // import { 
 // // // // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
 // // // // //   ScrollView, Alert, ActivityIndicator, Image 
@@ -378,140 +334,180 @@
 // // // // // import { BASE_URL } from '../api/Constants';
 
 // // // // // const CreatePostScreen = ({ route, navigation }: any) => {
-// // // // //   // מקבלים את הפרמטרים שנשלחו ממסך הקבוצה
-// // // // //   // target יהיה 'group' או 'world'
-// // // // //   const { target, groupId, groupName, userName } = route.params || {};
+// // // // //   const { target, groupId, userName } = route.params || {};
 
 // // // // //   const [loading, setLoading] = useState(false);
 // // // // //   const [description, setDescription] = useState('');
-// // // // //   const [secretMessage, setSecretMessage] = useState('');
 // // // // //   const [file, setFile] = useState<any>(null);
 
-// // // // //   // פונקציית בחירת קובץ מותאמת ל-CLI
+// // // // //   // --- States לניהול חברים ומסרים ---
+// // // // //   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+// // // // //   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
+// // // // //   const [searchQuery, setSearchQuery] = useState('');
+  
+// // // // //   // מצב עבודה: 'individual' (לכל אחד בנפרד) או 'group' (לכל הקבוצה)
+// // // // //   const [sendMode, setSendMode] = useState<'individual' | 'group'>('individual');
+// // // // //   const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
+// // // // //   const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+
+// // // // //   useEffect(() => {
+// // // // //     if (target === 'group' && groupId) {
+// // // // //       const url = `${BASE_URL}/groups/${groupId}/members`;
+// // // // //       fetch(url)
+// // // // //         .then(res => res.ok ? res.json() : Promise.reject())
+// // // // //         .then(data => {
+// // // // //           setGroupMembers(data);
+// // // // //           setFilteredMembers(data);
+// // // // //         })
+// // // // //         .catch(err => console.error("Fetch Error:", err));
+// // // // //     }
+// // // // //   }, [groupId, target]);
+
+// // // // //   const handleUserSearch = (text: string) => {
+// // // // //     setSearchQuery(text);
+// // // // //     const filtered = groupMembers.filter(m => 
+// // // // //       m.username && m.username.toLowerCase().includes(text.toLowerCase())
+// // // // //     );
+// // // // //     setFilteredMembers(filtered);
+// // // // //   };
+
+// // // // //   // פונקציה להוספת חבר בנפרד
+// // // // //   const addRecipient = (member: any) => {
+// // // // //     if (!currentSecretMessage.trim()) {
+// // // // //       Alert.alert("חסר מסר", "אנא כתוב מסר סודי לפני בחירת החבר.");
+// // // // //       return;
+// // // // //     }
+// // // // //     setSelectedRecipients(prev => ({ ...prev, [member.username]: currentSecretMessage }));
+// // // // //     setCurrentSecretMessage('');
+// // // // //     setSearchQuery('');
+// // // // //   };
+
+// // // // //   // פונקציה להחלת המסר על כל חברי הקבוצה
+// // // // //   const applyToAll = () => {
+// // // // //     if (!currentSecretMessage.trim()) {
+// // // // //       Alert.alert("חסר מסר", "אנא כתוב את המסר שברצונך לשלוח לכולם.");
+// // // // //       return;
+// // // // //     }
+// // // // //     const allMessages: { [key: string]: string } = {};
+// // // // //     groupMembers.forEach(m => {
+// // // // //       allMessages[m.username] = currentSecretMessage;
+// // // // //     });
+// // // // //     setSelectedRecipients(allMessages);
+// // // // //     Alert.alert("הצלחה", `המסר הוצמד ל-${groupMembers.length} חברים`);
+// // // // //   };
+
 // // // // //   const pickFile = async () => {
 // // // // //     try {
-// // // // //       const results = await DocumentPicker.pick({
-// // // // //         type: [
-// // // // //           DocumentPicker.types.images, 
-// // // // //           DocumentPicker.types.video, 
-// // // // //           DocumentPicker.types.audio
-// // // // //         ],
-// // // // //       });
-
-// // // // //       const selectedFile = results[0];
-// // // // //       setFile({
-// // // // //         uri: selectedFile.uri,
-// // // // //         name: selectedFile.name,
-// // // // //         type: selectedFile.type,
-// // // // //       });
-
-// // // // //     } catch (err: any) {
-// // // // //       if (err?.code === 'PICKER_CANCELLED') {
-// // // // //         console.log('User cancelled');
-// // // // //       } else {
-// // // // //         Alert.alert("שגיאה", "נכשלה בחירת הקובץ");
-// // // // //       }
-// // // // //     }
+// // // // //       const results = await DocumentPicker.pick({ type: [DocumentPicker.types.images] });
+// // // // //       setFile({ uri: results[0].uri, name: results[0].name, type: results[0].type });
+// // // // //     } catch (err) { /* Handle cancel */ }
 // // // // //   };
 
 // // // // //   const handlePublish = async () => {
-// // // // //     if (!file) return Alert.alert("שגיאה", "אנא בחר קובץ להעלאה");
-    
+// // // // //     if (!file) return Alert.alert("Wait!", "Select an image.");
 // // // // //     setLoading(true);
-
 // // // // //     const formData = new FormData();
-// // // // //     formData.append('file', {
-// // // // //       uri: file.uri,
-// // // // //       type: file.type,
-// // // // //       name: file.name,
-// // // // //     } as any);
-
+// // // // //     formData.append('file', { uri: file.uri, type: file.type || 'image/jpeg', name: file.name || 'upload.jpg' } as any);
 // // // // //     formData.append('description', description);
-// // // // //     formData.append('secretMessage', secretMessage);
-// // // // //     formData.append('senderUsername', userName); // השם שקיבלנו מהניווט
-    
-// // // // //     // שליחה ל-ID של הקבוצה או ל-world
+// // // // //     formData.append('senderUsername', userName);
 // // // // //     formData.append('target', target === 'group' ? groupId : 'world');
 
-// // // // //     try {
-// // // // //       const response = await fetch(`${BASE_URL}/posts/create`, {
-// // // // //         method: 'POST',
-// // // // //         body: formData,
-// // // // //         headers: {
-// // // // //           'Accept': 'application/json',
-// // // // //         },
-// // // // //       });
-
-// // // // //       if (response.ok) {
-// // // // //         Alert.alert("הצלחה!", "הפוסט פורסם בהצלחה");
-// // // // //         // חזרה אוטומטית למסך הקודם (הקבוצה)
-// // // // //         navigation.goBack();
-// // // // //       } else {
-// // // // //         Alert.alert("שגיאה", "השרת נכשל בעיבוד הפוסט");
-// // // // //       }
-// // // // //     } catch (error) {
-// // // // //       Alert.alert("שגיאה", "לא ניתן להתחבר לשרת. וודא ש-Java רץ");
-// // // // //     } finally {
-// // // // //       setLoading(false);
+// // // // //     if (Object.keys(selectedRecipients).length > 0) {
+// // // // //       formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
 // // // // //     }
+
+// // // // //     try {
+// // // // //       const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+// // // // //       if (res.ok) { navigation.goBack(); } else { Alert.alert("Error", "Server failed."); }
+// // // // //     } catch (e) { Alert.alert("Error", "Check connection."); } finally { setLoading(false); }
 // // // // //   };
 
 // // // // //   return (
 // // // // //     <SafeAreaView style={styles.container}>
 // // // // //       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-// // // // //         <Text style={styles.title}>
-// // // // //           פרסום ב{target === 'group' ? `קבוצת ${groupName}` : 'פיד הכללי'}
-// // // // //         </Text>
+// // // // //         <Text style={styles.title}>פוסט חדש</Text>
 
-// // // // //         {/* --- אזור בחירת קובץ עם תצוגה מקדימה --- */}
+// // // // //         {/* בחירת תמונה */}
 // // // // //         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-// // // // //           {file && file.type?.includes('image') ? (
-// // // // //             <Image source={{ uri: file.uri }} style={styles.previewImage} />
-// // // // //           ) : file ? (
-// // // // //             <View style={styles.filePlaceholder}>
-// // // // //                <Text style={{fontSize: 50}}>📎</Text>
-// // // // //                <Text style={styles.filePickerText}>{file.name}</Text>
+// // // // //           {file ? <Image source={{ uri: file.uri }} style={styles.previewImage} /> : <Text>📷 בחר תמונה</Text>}
+// // // // //         </TouchableOpacity>
+
+// // // // //         <Text style={styles.label}>תיאור גלוי</Text>
+// // // // //         <TextInput style={styles.input} placeholder="מה רואים בתמונה?" onChangeText={setDescription} />
+
+// // // // //         {target === 'group' && (
+// // // // //           <View style={styles.cryptoSection}>
+// // // // //             <Text style={styles.cryptoTitle}>🔐 הגדרות הצפנה סודית</Text>
+            
+// // // // //             <TextInput 
+// // // // //               style={[styles.input, styles.secretInput]} 
+// // // // //               placeholder="כתוב כאן את המסר הסודי..." 
+// // // // //               value={currentSecretMessage}
+// // // // //               onChangeText={setCurrentSecretMessage}
+// // // // //             />
+
+// // // // //             {/* כפתורי בחירת מצב */}
+// // // // //             <View style={styles.modeContainer}>
+// // // // //               <TouchableOpacity 
+// // // // //                 style={[styles.modeButton, sendMode === 'individual' && styles.activeMode]} 
+// // // // //                 onPress={() => { setSendMode('individual'); setSelectedRecipients({}); }}
+// // // // //               >
+// // // // //                 <Text style={sendMode === 'individual' ? styles.activeText : styles.inactiveText}>לכל אחד בנפרד</Text>
+// // // // //               </TouchableOpacity>
+              
+// // // // //               <TouchableOpacity 
+// // // // //                 style={[styles.modeButton, sendMode === 'group' && styles.activeMode]} 
+// // // // //                 onPress={() => setSendMode('group')}
+// // // // //               >
+// // // // //                 <Text style={sendMode === 'group' ? styles.activeText : styles.inactiveText}>לכל חברי הקבוצה</Text>
+// // // // //               </TouchableOpacity>
 // // // // //             </View>
-// // // // //           ) : (
-// // // // //             <View style={styles.filePlaceholder}>
-// // // // //                <Text style={{fontSize: 50}}>📁</Text>
-// // // // //                <Text style={styles.filePickerText}>לחץ לבחירת תמונה / וידאו / שמע</Text>
-// // // // //             </View>
-// // // // //           )}
+
+// // // // //             {sendMode === 'group' ? (
+// // // // //               <TouchableOpacity style={styles.applyAllBtn} onPress={applyToAll}>
+// // // // //                 <Text style={styles.applyAllText}>הצפן לכל {groupMembers.length} החברים ✅</Text>
+// // // // //               </TouchableOpacity>
+// // // // //             ) : (
+// // // // //               <View>
+// // // // //                 <TextInput
+// // // // //                   style={styles.input}
+// // // // //                   placeholder="חפש חבר לשיוך המסר..."
+// // // // //                   value={searchQuery}
+// // // // //                   onChangeText={handleUserSearch}
+// // // // //                 />
+// // // // //                 {searchQuery.length > 0 && (
+// // // // //                   <View style={styles.dropdown}>
+// // // // //                     {filteredMembers.map(m => (
+// // // // //                       <TouchableOpacity key={m.username} style={styles.memberItem} onPress={() => addRecipient(m)}>
+// // // // //                         <Text style={styles.memberText}>{m.username} (לחץ לשיוך)</Text>
+// // // // //                       </TouchableOpacity>
+// // // // //                     ))}
+// // // // //                   </View>
+// // // // //                 )}
+// // // // //               </View>
+// // // // //             )}
+
+// // // // //             {/* רשימת סיכום */}
+// // // // //             {Object.keys(selectedRecipients).length > 0 && (
+// // // // //               <View style={styles.summary}>
+// // // // //                 <Text style={styles.smallLabel}>רשימת נמענים סודיים ({Object.keys(selectedRecipients).length}):</Text>
+// // // // //                 {Object.entries(selectedRecipients).slice(0, 5).map(([name, msg]) => (
+// // // // //                   <View key={name} style={styles.badge}>
+// // // // //                     <Text style={styles.badgeText}>{name}: {msg}</Text>
+// // // // //                     <TouchableOpacity onPress={() => {
+// // // // //                       const n = {...selectedRecipients}; delete n[name]; setSelectedRecipients(n);
+// // // // //                     }}><Text style={{color:'red'}}>✖</Text></TouchableOpacity>
+// // // // //                   </View>
+// // // // //                 ))}
+// // // // //                 {Object.keys(selectedRecipients).length > 5 && <Text>... ועוד {Object.keys(selectedRecipients).length - 5} חברים</Text>}
+// // // // //               </View>
+// // // // //             )}
+// // // // //           </View>
+// // // // //         )}
+
+// // // // //         <TouchableOpacity style={styles.submitButton} onPress={handlePublish} disabled={loading}>
+// // // // //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>פרסם עכשיו 🚀</Text>}
 // // // // //         </TouchableOpacity>
-
-// // // // //         <Text style={styles.label}>תיאור גלוי:</Text>
-// // // // //         <TextInput
-// // // // //           style={styles.input}
-// // // // //           placeholder="מה רואים בקובץ?"
-// // // // //           multiline
-// // // // //           onChangeText={setDescription}
-// // // // //         />
-
-// // // // //         <Text style={[styles.label, { color: '#D32F2F' }]}>🤐 מסר סודי (סטגנוגרפיה):</Text>
-// // // // //         <TextInput
-// // // // //           style={[styles.input, styles.secretInput]}
-// // // // //           placeholder="הכנס מסר שיוחבא בתוך הקובץ..."
-// // // // //           onChangeText={setSecretMessage}
-// // // // //         />
-
-// // // // //         <TouchableOpacity 
-// // // // //           style={styles.submitButton} 
-// // // // //           onPress={handlePublish}
-// // // // //           disabled={loading}
-// // // // //         >
-// // // // //           {loading ? (
-// // // // //             <ActivityIndicator color="#fff" />
-// // // // //           ) : (
-// // // // //             <Text style={styles.submitButtonText}>פרסם עכשיו 🚀</Text>
-// // // // //           )}
-// // // // //         </TouchableOpacity>
-
-// // // // //         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-// // // // //           <Text style={styles.cancelButtonText}>ביטול</Text>
-// // // // //         </TouchableOpacity>
-
 // // // // //       </ScrollView>
 // // // // //     </SafeAreaView>
 // // // // //   );
@@ -520,583 +516,494 @@
 // // // // // const styles = StyleSheet.create({
 // // // // //   container: { flex: 1, backgroundColor: '#fff' },
 // // // // //   scrollContent: { padding: 20 },
-// // // // //   title: { fontSize: 22, fontWeight: 'bold', color: '#075E54', textAlign: 'center', marginBottom: 20 },
-// // // // //   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, textAlign: 'right' },
-  
-// // // // //   filePicker: { 
-// // // // //     height: 220, 
-// // // // //     borderWidth: 2, 
-// // // // //     borderColor: '#075E54', 
-// // // // //     borderStyle: 'dashed', 
-// // // // //     borderRadius: 15, 
-// // // // //     marginBottom: 20,
-// // // // //     backgroundColor: '#F5F5F5',
-// // // // //     overflow: 'hidden'
-// // // // //   },
-// // // // //   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-// // // // //   filePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 10 },
-// // // // //   filePickerText: { color: '#075E54', fontWeight: 'bold', textAlign: 'center', marginTop: 10 },
-
-// // // // //   input: { 
-// // // // //     backgroundColor: '#F9F9F9', 
-// // // // //     borderRadius: 10, 
-// // // // //     padding: 12, 
-// // // // //     textAlign: 'right', 
-// // // // //     marginBottom: 20,
-// // // // //     fontSize: 16,
-// // // // //     borderWidth: 1,
-// // // // //     borderColor: '#E0E0E0'
-// // // // //   },
-// // // // //   secretInput: { borderColor: '#FFCDD2', borderLeftWidth: 8 },
-  
-// // // // //   submitButton: { 
-// // // // //     backgroundColor: '#075E54', 
-// // // // //     padding: 18, 
-// // // // //     borderRadius: 30, 
-// // // // //     alignItems: 'center', 
-// // // // //     marginTop: 10,
-// // // // //     elevation: 3
-// // // // //   },
+// // // // //   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+// // // // //   label: { fontWeight: 'bold', marginTop: 10 },
+// // // // //   input: { backgroundColor: '#f0f0f0', padding: 12, borderRadius: 8, marginTop: 5 },
+// // // // //   cryptoSection: { marginTop: 20, padding: 15, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#eee', elevation: 3 },
+// // // // //   cryptoTitle: { fontSize: 16, fontWeight: 'bold', color: '#075E54', marginBottom: 10 },
+// // // // //   secretInput: { borderWidth: 1, borderColor: '#FFCDD2', backgroundColor: '#FFF5F5' },
+// // // // //   modeContainer: { flexDirection: 'row', marginTop: 15, marginBottom: 15, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#075E54' },
+// // // // //   modeButton: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#fff' },
+// // // // //   activeMode: { backgroundColor: '#075E54' },
+// // // // //   activeText: { color: '#fff', fontWeight: 'bold' },
+// // // // //   inactiveText: { color: '#075E54' },
+// // // // //   applyAllBtn: { backgroundColor: '#E8F5E9', padding: 15, borderRadius: 8, alignItems: 'center', borderColor: '#4CAF50' },
+// // // // //   applyAllText: { color: '#2E7D32', fontWeight: 'bold' },
+// // // // //   dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, maxHeight: 150, marginTop: 5 },
+// // // // //   memberItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+// // // // //   memberText: { fontWeight: 'bold' },
+// // // // //   summary: { marginTop: 15 },
+// // // // //   smallLabel: { fontSize: 12, color: '#666', marginBottom: 5 },
+// // // // //   badge: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#F1F8E9', padding: 8, borderRadius: 6, marginBottom: 4 },
+// // // // //   badgeText: { fontSize: 13, color: '#1B5E20' },
+// // // // //   submitButton: { backgroundColor: '#075E54', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 25 },
 // // // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  
-// // // // //   cancelButton: { marginTop: 15, alignItems: 'center' },
-// // // // //   cancelButtonText: { color: '#999', fontSize: 16 }
+// // // // //   filePicker: { height: 180, backgroundColor: '#f9f9f9', justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderStyle: 'dashed', borderWidth: 2, borderColor: '#ccc' },
+// // // // //   previewImage: { width: '100%', height: '100%', borderRadius: 12 }
 // // // // // });
 
 // // // // // export default CreatePostScreen;
 // // // // import React, { useState, useEffect } from 'react';
 // // // // import { 
 // // // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-// // // //   ScrollView, Alert, ActivityIndicator, Image, FlatList 
+// // // //   ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform 
 // // // // } from 'react-native';
 // // // // import { SafeAreaView } from 'react-native-safe-area-context';
 // // // // import * as DocumentPicker from '@react-native-documents/picker';
 // // // // import { BASE_URL } from '../api/Constants';
 
 // // // // const CreatePostScreen = ({ route, navigation }: any) => {
-// // // //   const { target, groupId, groupName, userName } = route.params || {};
+// // // //   const { target, groupId, userName } = route.params || {};
 
 // // // //   const [loading, setLoading] = useState(false);
 // // // //   const [description, setDescription] = useState('');
 // // // //   const [file, setFile] = useState<any>(null);
-  
-// // // //   // ניהול חברים ומסרים
-// // // //   const [members, setMembers] = useState<string[]>([]); // כל חברי הקבוצה מהשרת
-// // // //   const [filteredMembers, setFilteredMembers] = useState<string[]>([]);
-// // // //   const [searchQuery, setSearchQuery] = useState('');
-// // // //   const [selectedMessages, setSelectedMessages] = useState<{[key: string]: string}>({});
-// // // //   const [isUniform, setIsUniform] = useState(true); // האם מסר אחיד או אישי
-// // // //   const [uniformMessage, setUniformMessage] = useState('');
 
-// // // //   // 1. שליפת חברי הקבוצה מהשרת
+// // // //   // --- States לניהול חברים ומסרים ---
+// // // //   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+// // // //   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
+// // // //   const [searchQuery, setSearchQuery] = useState('');
+  
+// // // //   const [sendMode, setSendMode] = useState<'individual' | 'group' | null>(null);
+// // // //   const [activeRecipient, setActiveRecipient] = useState<any>(null); 
+// // // //   const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+// // // //   const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
+
 // // // //   useEffect(() => {
-// // // //     if (target === 'group') {
+// // // //     if (target === 'group' && groupId) {
 // // // //       fetch(`${BASE_URL}/groups/${groupId}/members`)
 // // // //         .then(res => res.json())
 // // // //         .then(data => {
-// // // //           // סינון המשתמש הנוכחי מהרשימה
-// // // //           const otherMembers = data.filter((m: string) => m !== userName);
-// // // //           setMembers(otherMembers);
-// // // //           setFilteredMembers(otherMembers);
+// // // //           setGroupMembers(data);
+// // // //           setFilteredMembers(data);
 // // // //         })
-// // // //         .catch(err => console.error("Error fetching members:", err));
+// // // //         .catch(err => console.error(err));
 // // // //     }
 // // // //   }, [groupId]);
 
-// // // //   // 2. פונקציית חיפוש
-// // // //   const handleSearch = (text: string) => {
+// // // //   const handleUserSearch = (text: string) => {
 // // // //     setSearchQuery(text);
-// // // //     const filtered = members.filter(m => m.includes(text));
-// // // //     setFilteredMembers(filtered);
+// // // //     setFilteredMembers(groupMembers.filter(m => 
+// // // //       m.username?.toLowerCase().includes(text.toLowerCase())
+// // // //     ));
 // // // //   };
 
-// // // //   // 3. עדכון מסר עבור חבר ספציפי
-// // // //   const toggleMember = (member: string) => {
-// // // //     const newSelected = { ...selectedMessages };
-// // // //     if (newSelected[member] !== undefined) {
-// // // //       delete newSelected[member]; // הסרה
+// // // //   // --- פונקציית הקסם החדשה ---
+// // // //   const saveMessageToRecipient = () => {
+// // // //     if (!currentSecretMessage.trim()) return Alert.alert("שגיאה", "נא להזין מסר סודי");
+    
+// // // //     if (sendMode === 'group') {
+// // // //       // כאן אנחנו רצים על כל חברי הקבוצה ונותנים לכולם את אותו מסר
+// // // //       const allMessages: { [key: string]: string } = {};
+// // // //       groupMembers.forEach(member => {
+// // // //         allMessages[member.username] = currentSecretMessage;
+// // // //       });
+// // // //       setSelectedRecipients(allMessages);
+// // // //       Alert.alert("בוצע!", `המסר הוצמד לכל ${groupMembers.length} חברי הקבוצה`);
 // // // //     } else {
-// // // //       newSelected[member] = isUniform ? uniformMessage : ""; // הוספה
+// // // //       // הצפנה ליחיד
+// // // //       setSelectedRecipients(prev => ({ ...prev, [activeRecipient.username]: currentSecretMessage }));
 // // // //     }
-// // // //     setSelectedMessages(newSelected);
-// // // //   };
 
-// // // //   const updateIndividualMessage = (member: string, text: string) => {
-// // // //     setSelectedMessages(prev => ({ ...prev, [member]: text }));
+// // // //     // איפוס לבחירה הבאה
+// // // //     setCurrentSecretMessage('');
+// // // //     setActiveRecipient(null);
+// // // //     setSearchQuery('');
+// // // //     setSendMode(null);
 // // // //   };
 
 // // // //   const pickFile = async () => {
-// // // //   try {
-// // // //     const results = await DocumentPicker.pick({
-// // // //       // מאפשר לבחור הכל: תמונות, וידאו, PDF ושמע
-// // // //       type: [
-// // // //         DocumentPicker.types.images,
-// // // //         DocumentPicker.types.video,
-// // // //         DocumentPicker.types.pdf,
-// // // //         DocumentPicker.types.audio,
-// // // //       ],
-// // // //     });
-
-// // // //     const res = results[0];
-// // // //     setFile({
-// // // //       uri: res.uri,
-// // // //       type: res.type || 'application/octet-stream',
-// // // //       name: res.name,
-// // // //     });
-// // // //   } catch (err: any) {
-// // // //     if (err?.code === 'PICKER_CANCELLED' || err?.message?.includes('cancel')) {
-// // // //       console.log('User cancelled');
-// // // //     } else {
-// // // //       Alert.alert("שגיאה", "נכשלה בחירת הקובץ");
-// // // //     }
-// // // //   }
-// // // // };
+// // // //     try {
+// // // //       const res = await DocumentPicker.pick({ type: [DocumentPicker.types.images] });
+// // // //       setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
+// // // //     } catch (e) {}
+// // // //   };
 
 // // // //   const handlePublish = async () => {
-// // // //   if (!file) return Alert.alert("שגיאה", "אנא בחר קובץ");
-  
-// // // //   // אם לא נבחרו חברים, אין טעם לשלוח מפה ריקה
-// // // //   if (Object.keys(selectedMessages).length === 0) {
-// // // //     return Alert.alert("שגיאה", "בחר לפחות חבר אחד שיוכל לראות את המסר הסודי");
-// // // //   }
+// // // //     if (!file) return Alert.alert("חסרה תמונה", "יש לבחור תמונה לפני הפרסום");
+// // // //     setLoading(true);
+// // // //     const formData = new FormData();
+// // // //     formData.append('file', { uri: file.uri, type: file.type || 'image/jpeg', name: file.name || 'img.jpg' } as any);
+// // // //     formData.append('description', description);
+// // // //     formData.append('senderUsername', userName);
+// // // //     formData.append('target', target === 'group' ? groupId : 'world');
 
-// // // //   setLoading(true);
-
-// // // //   // 1. הכנת המפה הסופית לפי הבחירה (אחיד או אישי)
-// // // //   const finalMap: {[key: string]: string} = {};
-// // // //   Object.keys(selectedMessages).forEach(user => {
-// // // //     finalMap[user] = isUniform ? uniformMessage : selectedMessages[user];
-// // // //   });
-
-// // // //   const formData = new FormData();
-  
-// // // //   // הקובץ (תמונה/וידאו)
-// // // //   formData.append('file', {
-// // // //     uri: file.uri,
-// // // //     type: file.type || 'image/jpeg',
-// // // //     name: file.name || 'upload.jpg',
-// // // //   } as any);
-
-// // // //   // שדות המידע ל-Java
-// // // //   formData.append('description', description);
-// // // //   formData.append('senderUsername', userName); // השם שלך (היוצר)
-// // // //   formData.append('target', target === 'group' ? groupId : 'world'); // שם/ID הקבוצה
-// // // //   formData.append('userMessagesJson', JSON.stringify(finalMap)); // המפה הסודית
-
-// // // //   try {
-// // // //     // שים לב לתוספת של /api/ לפני ה-posts
-// // // //     const response = await fetch(`${BASE_URL}/api/posts/create`, {
-// // // //       method: 'POST',
-// // // //       body: formData,
-// // // //       headers: {
-// // // //         'Accept': 'application/json',
-// // // //       },
-// // // //     });
-
-// // // //     if (response.ok) {
-// // // //       Alert.alert("הצלחה!", "הפוסט פורסם והמסרים הוטמעו בהצלחה 🚀");
-// // // //       navigation.goBack();
-// // // //     } else {
-// // // //       const errorMsg = await response.text();
-// // // //       console.log("Server Error:", errorMsg);
-// // // //       Alert.alert("שגיאה מהשרת", "נכשל בפרסום הפוסט");
+// // // //     if (Object.keys(selectedRecipients).length > 0) {
+// // // //       formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
 // // // //     }
-// // // //   } catch (error) {
-// // // //     console.error("Fetch Error:", error);
-// // // //     Alert.alert("שגיאה", "לא ניתן להתחבר לשרת");
-// // // //   } finally {
-// // // //     setLoading(false);
-// // // //   }
-// // // // };
+
+// // // //     try {
+// // // //       const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+// // // //       if (res.ok) navigation.goBack();
+// // // //       else Alert.alert("שגיאה", "השרת נכשל בפרסום");
+// // // //     } catch (e) { Alert.alert("שגיאת חיבור"); } finally { setLoading(false); }
+// // // //   };
 
 // // // //   return (
 // // // //     <SafeAreaView style={styles.container}>
-// // // //       <ScrollView contentContainerStyle={styles.scrollContent}>
-// // // //         <Text style={styles.title}>יצירת פוסט ב{groupName}</Text>
+// // // //       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+// // // //         <ScrollView contentContainerStyle={styles.scrollContent}>
+          
+// // // //           <Text style={styles.headerTitle}>פוסט קבוצתי מאובטח</Text>
 
-// // // //         {/* בחירת קובץ */}
-// // // //         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-// // // //           {file ? <Image source={{ uri: file.uri }} style={styles.previewImage} /> : <Text style={styles.filePickerText}>📁 בחר תמונה / וידאו</Text>}
-// // // //         </TouchableOpacity>
-
-// // // //         <Text style={styles.label}>מה רואים בתמונה? (תיאור גלוי)</Text>
-// // // //         <TextInput style={styles.input} placeholder="תיאור חופשי..." onChangeText={setDescription} />
-
-// // // //         <View style={styles.separator} />
-
-// // // //         {/* ניהול מסרים סודיים */}
-// // // //         <Text style={styles.sectionTitle}>🤐 מי יראה את המסר הסודי?</Text>
-        
-// // // //         <View style={styles.toggleContainer}>
-// // // //           <TouchableOpacity 
-// // // //             style={[styles.toggleBtn, isUniform && styles.activeToggle]} 
-// // // //             onPress={() => setIsUniform(true)}
-// // // //           >
-// // // //             <Text style={isUniform ? styles.activeToggleText : {}}>מסר אחיד</Text>
-// // // //           </TouchableOpacity>
-// // // //           <TouchableOpacity 
-// // // //             style={[styles.toggleBtn, !isUniform && styles.activeToggle]} 
-// // // //             onPress={() => setIsUniform(false)}
-// // // //           >
-// // // //             <Text style={!isUniform ? styles.activeToggleText : {}}>מסר אישי לכל אחד</Text>
-// // // //           </TouchableOpacity>
-// // // //         </View>
-
-// // // //         {isUniform && (
-// // // //           <TextInput 
-// // // //             style={[styles.input, styles.secretBorder]} 
-// // // //             placeholder="כתוב כאן את המסר שכולם יראו..." 
-// // // //             onChangeText={setUniformMessage}
-// // // //           />
-// // // //         )}
-
-// // // //         {/* חיפוש חברים */}
-// // // //         <TextInput 
-// // // //           style={styles.searchInput} 
-// // // //           placeholder="🔍 חפש חבר בקבוצה..." 
-// // // //           value={searchQuery}
-// // // //           onChangeText={handleSearch}
-// // // //         />
-
-// // // //         <View style={styles.membersList}>
-// // // //           {filteredMembers.map(member => (
-// // // //             <View key={member} style={styles.memberItem}>
-// // // //               <TouchableOpacity 
-// // // //                 style={[styles.checkbox, selectedMessages[member] !== undefined && styles.checked]} 
-// // // //                 onPress={() => toggleMember(member)}
-// // // //               />
-// // // //               <View style={{flex: 1}}>
-// // // //                 <Text style={styles.memberName}>{member}</Text>
-// // // //                 {!isUniform && selectedMessages[member] !== undefined && (
-// // // //                   <TextInput 
-// // // //                     style={styles.individualInput}
-// // // //                     placeholder={`מסר אישי ל${member}...`}
-// // // //                     onChangeText={(txt) => updateIndividualMessage(member, txt)}
-// // // //                   />
-// // // //                 )}
+// // // //           {/* בחירת מדיה */}
+// // // //           <TouchableOpacity style={styles.mediaCard} onPress={pickFile}>
+// // // //             {file ? (
+// // // //               <Image source={{ uri: file.uri }} style={styles.fullImage} />
+// // // //             ) : (
+// // // //               <View style={styles.uploadPlaceholder}>
+// // // //                 <Text style={{fontSize: 50}}>🖼️</Text>
+// // // //                 <Text style={styles.uploadText}>לחץ לבחירת תמונה</Text>
 // // // //               </View>
-// // // //             </View>
-// // // //           ))}
-// // // //         </View>
+// // // //             )}
+// // // //           </TouchableOpacity>
 
-// // // //         <TouchableOpacity style={styles.submitButton} onPress={handlePublish} disabled={loading}>
-// // // //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>פרסם פוסט סטגנוגרפי 🚀</Text>}
-// // // //         </TouchableOpacity>
-// // // //       </ScrollView>
+// // // //           <TextInput 
+// // // //             style={styles.captionInput} 
+// // // //             placeholder="תיאור גלוי לכולם..." 
+// // // //             multiline
+// // // //             onChangeText={setDescription}
+// // // //           />
+
+// // // //           {target === 'group' && (
+// // // //             <View style={styles.cryptoSection}>
+// // // //               <Text style={styles.sectionTitle}>🔒 למי נצפין מסר סודי?</Text>
+              
+// // // //               {!sendMode && !activeRecipient && (
+// // // //                 <View style={styles.modeGrid}>
+// // // //                   <TouchableOpacity style={[styles.modeCard, {borderColor: '#38A169', borderWidth: 1}]} onPress={() => setSendMode('group')}>
+// // // //                     <Text style={styles.modeEmoji}>📢</Text>
+// // // //                     <Text style={styles.modeLabel}>כל הקבוצה</Text>
+// // // //                     <Text style={{fontSize: 10, color: '#666'}}>מסר אחד לכולם</Text>
+// // // //                   </TouchableOpacity>
+// // // //                   <TouchableOpacity style={[styles.modeCard, {borderColor: '#3182CE', borderWidth: 1}]} onPress={() => setSendMode('individual')}>
+// // // //                     <Text style={styles.modeEmoji}>👤</Text>
+// // // //                     <Text style={styles.modeLabel}>חבר ספציפי</Text>
+// // // //                     <Text style={{fontSize: 10, color: '#666'}}>מסר אישי</Text>
+// // // //                   </TouchableOpacity>
+// // // //                 </View>
+// // // //               )}
+
+// // // //               {sendMode === 'individual' && !activeRecipient && (
+// // // //                 <View>
+// // // //                   <TextInput 
+// // // //                     style={styles.searchBar} 
+// // // //                     placeholder="חפש חבר מהקבוצה..." 
+// // // //                     onChangeText={handleUserSearch}
+// // // //                   />
+// // // //                   <View style={styles.resultsContainer}>
+// // // //                     {filteredMembers.map(m => (
+// // // //                       <TouchableOpacity key={m.username} style={styles.userRow} onPress={() => setActiveRecipient(m)}>
+// // // //                         <Text style={styles.userNameText}>{m.username}</Text>
+// // // //                         <Text style={styles.plusIcon}>בחר 👤</Text>
+// // // //                       </TouchableOpacity>
+// // // //                     ))}
+// // // //                   </View>
+// // // //                 </View>
+// // // //               )}
+
+// // // //               {(activeRecipient || sendMode === 'group') && (
+// // // //                 <View style={styles.messageEditor}>
+// // // //                   <Text style={styles.editingFor}>
+// // // //                     נמען: <Text style={{fontWeight:'bold', color: '#2D3748'}}>{activeRecipient?.username || `כל חברי הקבוצה (${groupMembers.length})`}</Text>
+// // // //                   </Text>
+// // // //                   <TextInput 
+// // // //                     style={styles.secretInput} 
+// // // //                     placeholder="מהו המסר הסודי שיוטמן בתמונה?"
+// // // //                     value={currentSecretMessage}
+// // // //                     onChangeText={setCurrentSecretMessage}
+// // // //                     autoFocus
+// // // //                   />
+// // // //                   <View style={styles.editorButtons}>
+// // // //                     <TouchableOpacity style={styles.cancelBtn} onPress={() => {setSendMode(null); setActiveRecipient(null);}}>
+// // // //                       <Text style={{color:'#666'}}>ביטול</Text>
+// // // //                     </TouchableOpacity>
+// // // //                     <TouchableOpacity style={styles.saveBtn} onPress={saveMessageToRecipient}>
+// // // //                       <Text style={{color:'#fff', fontWeight:'bold'}}>אשר והצפן ✅</Text>
+// // // //                     </TouchableOpacity>
+// // // //                   </View>
+// // // //                 </View>
+// // // //               )}
+
+// // // //               {/* רשימת סיכום */}
+// // // //               {Object.keys(selectedRecipients).length > 0 && (
+// // // //                 <View style={styles.summaryBox}>
+// // // //                   <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+// // // //                     <Text style={styles.summaryTitle}>נמענים מאושרים:</Text>
+// // // //                     <TouchableOpacity onPress={() => setSelectedRecipients({})}>
+// // // //                        <Text style={{color: 'red', fontSize: 12}}>נקה הכל</Text>
+// // // //                     </TouchableOpacity>
+// // // //                   </View>
+// // // //                   {Object.entries(selectedRecipients).slice(0, 3).map(([name, msg]) => (
+// // // //                     <View key={name} style={styles.summaryRow}>
+// // // //                       <Text style={styles.summaryText} numberOfLines={1}>• {name}: {msg}</Text>
+// // // //                     </View>
+// // // //                   ))}
+// // // //                   {Object.keys(selectedRecipients).length > 3 && (
+// // // //                     <Text style={{fontSize: 12, color: '#718096', textAlign: 'center', marginTop: 5}}>
+// // // //                       ... ועוד {Object.keys(selectedRecipients).length - 3} חברים ברשימה
+// // // //                     </Text>
+// // // //                   )}
+// // // //                 </View>
+// // // //               )}
+// // // //             </View>
+// // // //           )}
+
+// // // //           <TouchableOpacity style={styles.publishBtn} onPress={handlePublish} disabled={loading}>
+// // // //             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.publishBtnText}>שלח פוסט לקבוצה 🚀</Text>}
+// // // //           </TouchableOpacity>
+
+// // // //         </ScrollView>
+// // // //       </KeyboardAvoidingView>
 // // // //     </SafeAreaView>
 // // // //   );
 // // // // };
 
 // // // // const styles = StyleSheet.create({
-// // // //   container: { flex: 1, backgroundColor: '#fff' },
+// // // //   container: { flex: 1, backgroundColor: '#F0F4F8' },
 // // // //   scrollContent: { padding: 20 },
-// // // //   title: { fontSize: 20, fontWeight: 'bold', color: '#075E54', textAlign: 'center', marginBottom: 15 },
-// // // //   label: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 5 },
-// // // //   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#D32F2F', textAlign: 'right', marginTop: 10, marginBottom: 10 },
-// // // //   filePicker: { height: 150, borderWidth: 1, borderColor: '#ccc', borderStyle: 'dashed', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-// // // //   previewImage: { width: '100%', height: '100%', borderRadius: 10 },
-// // // //   filePickerText: { color: '#666' },
-// // // //   input: { backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, textAlign: 'right', marginBottom: 15, borderWidth: 1, borderColor: '#eee' },
-// // // //   secretBorder: { borderColor: '#FFCDD2', borderRightWidth: 5 },
-// // // //   separator: { height: 1, backgroundColor: '#eee', marginVertical: 10 },
-// // // //   toggleContainer: { flexDirection: 'row-reverse', marginBottom: 15 },
-// // // //   toggleBtn: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: 5, marginLeft: 5 },
-// // // //   activeToggle: { backgroundColor: '#075E54' },
-// // // //   activeToggleText: { color: '#fff', fontWeight: 'bold' },
-// // // //   searchInput: { backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#ccc', padding: 8, textAlign: 'right', marginBottom: 10 },
-// // // //   membersList: { marginBottom: 20 },
-// // // //   memberItem: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 12 },
-// // // //   checkbox: { width: 20, height: 20, borderWidth: 2, borderColor: '#075E54', borderRadius: 4, marginLeft: 10 },
-// // // //   checked: { backgroundColor: '#075E54' },
-// // // //   memberName: { fontSize: 16, textAlign: 'right' },
-// // // //   individualInput: { backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#D32F2F', padding: 4, textAlign: 'right', fontSize: 13 },
-// // // //   submitButton: { backgroundColor: '#075E54', padding: 15, borderRadius: 25, alignItems: 'center' },
-// // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+// // // //   headerTitle: { fontSize: 22, fontWeight: '800', color: '#2D3748', textAlign: 'center', marginBottom: 20 },
+// // // //   mediaCard: { height: 200, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', elevation: 3, justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 2, borderColor: '#CBD5E0' },
+// // // //   fullImage: { width: '100%', height: '100%' },
+// // // //   uploadPlaceholder: { alignItems: 'center' },
+// // // //   uploadText: { marginTop: 10, color: '#718096', fontWeight: 'bold' },
+// // // //   captionInput: { backgroundColor: '#fff', borderRadius: 12, padding: 15, marginTop: 15, fontSize: 16, textAlignVertical: 'top', minHeight: 60 },
+// // // //   cryptoSection: { marginTop: 20, backgroundColor: '#fff', borderRadius: 20, padding: 15, elevation: 2 },
+// // // //   sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#2D3748', marginBottom: 15 },
+// // // //   modeGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+// // // //   modeCard: { backgroundColor: '#F7FAFC', width: '48%', padding: 15, borderRadius: 15, alignItems: 'center' },
+// // // //   modeEmoji: { fontSize: 25, marginBottom: 5 },
+// // // //   modeLabel: { fontWeight: 'bold', color: '#2D3748' },
+// // // //   searchBar: { backgroundColor: '#EDF2F7', padding: 12, borderRadius: 10 },
+// // // //   resultsContainer: { marginTop: 10, maxHeight: 150 },
+// // // //   userRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderBottomColor: '#EDF2F7' },
+// // // //   userNameText: { fontWeight: '600' },
+// // // //   plusIcon: { color: '#3182CE', fontSize: 12 },
+// // // //   messageEditor: { backgroundColor: '#F0FFF4', padding: 15, borderRadius: 15, borderWidth: 1, borderColor: '#38A169' },
+// // // //   editingFor: { marginBottom: 10, fontSize: 14 },
+// // // //   secretInput: { backgroundColor: '#fff', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#C6F6D5', fontSize: 16 },
+// // // //   editorButtons: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+// // // //   cancelBtn: { padding: 10, marginRight: 10 },
+// // // //   saveBtn: { backgroundColor: '#38A169', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
+// // // //   summaryBox: { marginTop: 15, backgroundColor: '#F7FAFC', padding: 10, borderRadius: 10 },
+// // // //   summaryTitle: { fontSize: 13, fontWeight: 'bold', color: '#4A5568' },
+// // // //   summaryRow: { paddingVertical: 3 },
+// // // //   summaryText: { fontSize: 12, color: '#4A5568' },
+// // // //   publishBtn: { backgroundColor: '#2D3748', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 25, marginBottom: 30 },
+// // // //   publishBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 // // // // });
 
 // // // // export default CreatePostScreen;
 // // // import React, { useState, useEffect } from 'react';
 // // // import { 
 // // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-// // //   ScrollView, Alert, ActivityIndicator, Image 
+// // //   ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform 
 // // // } from 'react-native';
 // // // import { SafeAreaView } from 'react-native-safe-area-context';
 // // // import * as DocumentPicker from '@react-native-documents/picker';
 // // // import { BASE_URL } from '../api/Constants';
 
 // // // const CreatePostScreen = ({ route, navigation }: any) => {
-// // //   // מקבלים את הפרמטרים: target (group/world), groupId, groupName, userName
-// // //   const { target, groupId, groupName, userName } = route.params || {};
+// // //   const { target, groupId, userName } = route.params || {};
 
 // // //   const [loading, setLoading] = useState(false);
-// // //   const [description, setDescription] = useState(''); // תיאור גלוי
+// // //   const [description, setDescription] = useState('');
 // // //   const [file, setFile] = useState<any>(null);
 
-// // //   // ניהול חברים ומסרים סודיים
-// // //   const [members, setMembers] = useState<string[]>([]); // רשימת המקור מהשרת
-// // //   const [filteredMembers, setFilteredMembers] = useState<string[]>([]); // הרשימה שמוצגת בחיפוש
+// // //   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+// // //   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
 // // //   const [searchQuery, setSearchQuery] = useState('');
-// // //   const [selectedMessages, setSelectedMessages] = useState<{[key: string]: string}>({});
-// // //   const [isUniform, setIsUniform] = useState(true); // מסר אחיד או אישי
-// // //   const [uniformMessage, setUniformMessage] = useState('');
+  
+// // //   const [sendMode, setSendMode] = useState<'individual' | 'group' | null>(null);
+// // //   const [activeRecipient, setActiveRecipient] = useState<any>(null); 
+// // //   const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+// // //   const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
 
-// // //   // 1. שליפת חברי הקבוצה מהשרת בעת טעינה
 // // //   useEffect(() => {
 // // //     if (target === 'group' && groupId) {
-// // //       fetch(`${BASE_URL}/api/groups/${groupId}/members`)
+// // //       fetch(`${BASE_URL}/groups/${groupId}/members`)
 // // //         .then(res => res.json())
 // // //         .then(data => {
-// // //           const others = data.filter((m: string) => m !== userName);
-// // //           setMembers(others);
-// // //           setFilteredMembers(others);
+// // //           setGroupMembers(data);
+// // //           setFilteredMembers(data);
 // // //         })
-// // //         .catch(err => console.error("Error fetching members:", err));
+// // //         .catch(err => console.error(err));
 // // //     }
 // // //   }, [groupId]);
 
-// // //   // 2. פונקציית חיפוש עם השלמה אוטומטית (Autocomplete)
-// // //   const handleSearch = (text: string) => {
+// // //   // פונקציית סינון: מציגה רק מי שלא נבחר וגם מתאימה לחיפוש
+// // //   const updateFilteredList = (text: string, currentSelected: any) => {
+// // //     const remaining = groupMembers.filter(m => !currentSelected[m.username]);
+// // //     const filtered = remaining.filter(m => 
+// // //       m.username?.toLowerCase().includes(text.toLowerCase())
+// // //     );
+// // //     setFilteredMembers(filtered);
+// // //   };
+
+// // //   const handleUserSearch = (text: string) => {
 // // //     setSearchQuery(text);
-// // //     if (text.trim() === '') {
-// // //       setFilteredMembers(members);
+// // //     updateFilteredList(text, selectedRecipients);
+// // //   };
+
+// // //   const saveMessageToRecipient = () => {
+// // //     if (!currentSecretMessage.trim()) return Alert.alert("שגיאה", "נא להזין מסר");
+    
+// // //     const newSelected = { ...selectedRecipients };
+    
+// // //     if (sendMode === 'group') {
+// // //       groupMembers.forEach(m => { newSelected[m.username] = currentSecretMessage; });
+// // //       setSendMode(null);
 // // //     } else {
-// // //       const filtered = members.filter(m => 
-// // //         m.toLowerCase().includes(text.toLowerCase())
-// // //       );
-// // //       setFilteredMembers(filtered);
+// // //       newSelected[activeRecipient.username] = currentSecretMessage;
+// // //       setActiveRecipient(null); // סוגר את תיבת הטקסט
+// // //       setSearchQuery(''); // מאפס חיפוש
 // // //     }
+
+// // //     setSelectedRecipients(newSelected);
+// // //     setCurrentSecretMessage('');
+// // //     // עדכון הרשימה מיד אחרי השמירה כדי שהחבר שנבחר ייעלם מהרשימה
+// // //     updateFilteredList('', newSelected);
 // // //   };
 
-// // //   const clearSearch = () => {
-// // //     setSearchQuery('');
-// // //     setFilteredMembers(members);
-// // //   };
-
-// // //   // 3. בחירת קובץ - תומך בהכל (PDF, Audio, Video, Image)
 // // //   const pickFile = async () => {
 // // //     try {
-// // //       const results = await DocumentPicker.pick({
-// // //         type: [
-// // //           DocumentPicker.types.images,
-// // //           DocumentPicker.types.video,
-// // //           DocumentPicker.types.pdf,
-// // //           DocumentPicker.types.audio,
-// // //           DocumentPicker.types.allFiles
-// // //         ],
-// // //       });
-
-// // //       const res = results[0];
-// // //       setFile({
-// // //         uri: res.uri,
-// // //         name: res.name,
-// // //         type: res.type || 'application/octet-stream',
-// // //       });
-// // //     } catch (err: any) {
-// // //       const isCancel = err?.message?.includes('cancel') || err?.code === 'PICKER_CANCELLED';
-// // //       if (!isCancel) {
-// // //         Alert.alert("שגיאה", "נכשלה בחירת הקובץ");
-// // //       }
-// // //     }
+// // //       const res = await DocumentPicker.pick({ type: [DocumentPicker.types.images] });
+// // //       setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
+// // //     } catch (e) {}
 // // //   };
 
-// // //   const toggleMember = (member: string) => {
-// // //     const newSelected = { ...selectedMessages };
-// // //     if (newSelected[member] !== undefined) {
-// // //       delete newSelected[member];
-// // //     } else {
-// // //       newSelected[member] = ""; // ברירת מחדל ריק, יתמלא לפי isUniform
-// // //     }
-// // //     setSelectedMessages(newSelected);
-// // //   };
-
-// // //   const updateIndividualMessage = (member: string, text: string) => {
-// // //     setSelectedMessages(prev => ({ ...prev, [member]: text }));
-// // //   };
-
-// // //   // 4. שליחת הפוסט לשרת
 // // //   const handlePublish = async () => {
-// // //     if (!file) return Alert.alert("שגיאה", "אנא בחר קובץ להעלאה");
-// // //     if (target === 'group' && Object.keys(selectedMessages).length === 0) {
-// // //       return Alert.alert("שגיאה", "בחר לפחות חבר אחד למסר הסודי");
-// // //     }
-
+// // //     if (!file) return Alert.alert("חסרה תמונה", "בחר תמונה");
 // // //     setLoading(true);
-
-// // //     const finalMap: {[key: string]: string} = {};
-// // //     Object.keys(selectedMessages).forEach(user => {
-// // //       finalMap[user] = isUniform ? uniformMessage : selectedMessages[user];
-// // //     });
-
 // // //     const formData = new FormData();
-// // //     formData.append('file', {
-// // //       uri: file.uri,
-// // //       type: file.type,
-// // //       name: file.name,
-// // //     } as any);
-
-// // //     formData.append('description', description); // מידע על התמונה/קובץ
-// // //     formData.append('senderUsername', userName); // שם היוצר
-// // //     formData.append('target', target === 'group' ? groupId : 'world'); // מזהה הקבוצה
-// // //     formData.append('userMessagesJson', JSON.stringify(finalMap)); // המפה הסודית
-
-// // //     try {
-// // //       const response = await fetch(`${BASE_URL}/api/posts/create`, {
-// // //         method: 'POST',
-// // //         body: formData,
-// // //         headers: { 'Accept': 'application/json' },
-// // //       });
-
-// // //       if (response.ok) {
-// // //         Alert.alert("הצלחה!", "הפוסט פורסם בהצלחה 🚀");
-// // //         navigation.goBack();
-// // //       } else {
-// // //         Alert.alert("שגיאה", "השרת נכשל בעיבוד הפוסט");
-// // //       }
-// // //     } catch (error) {
-// // //       Alert.alert("שגיאה", "לא ניתן להתחבר לשרת");
-// // //     } finally {
-// // //       setLoading(false);
+// // //     formData.append('file', { uri: file.uri, type: file.type || 'image/jpeg', name: file.name || 'img.jpg' } as any);
+// // //     formData.append('description', description);
+// // //     formData.append('senderUsername', userName);
+// // //     formData.append('target', target === 'group' ? groupId : 'world');
+// // //     if (Object.keys(selectedRecipients).length > 0) {
+// // //       formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
 // // //     }
+// // //     try {
+// // //       const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+// // //       if (res.ok) navigation.goBack();
+// // //       else Alert.alert("שגיאה בשרת");
+// // //     } catch (e) { Alert.alert("שגיאת חיבור"); } finally { setLoading(false); }
 // // //   };
 
 // // //   return (
 // // //     <SafeAreaView style={styles.container}>
-// // //       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-// // //         <Text style={styles.title}>
-// // //           פרסום ב{target === 'group' ? `קבוצת ${groupName}` : 'פיד הכללי'}
-// // //         </Text>
+// // //       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+// // //         <ScrollView contentContainerStyle={styles.scrollContent}>
+          
+// // //           <Text style={styles.headerTitle}>פוסט חדש</Text>
 
-// // //         {/* בחירת קובץ עם תצוגה מקדימה */}
-// // //         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-// // //           {file && file.type?.includes('image') ? (
-// // //             <Image source={{ uri: file.uri }} style={styles.previewImage} />
-// // //           ) : (
-// // //             <View style={styles.filePlaceholder}>
-// // //                <Text style={{fontSize: 50}}>{file ? '📎' : '📁'}</Text>
-// // //                <Text style={styles.filePickerText}>
-// // //                  {file ? file.name : "לחץ לבחירת תמונה / וידאו / PDF / שמע"}
-// // //                </Text>
-// // //             </View>
-// // //           )}
-// // //         </TouchableOpacity>
-
-// // //         <Text style={styles.label}>תיאור גלוי (מידע על הקובץ):</Text>
-// // //         <TextInput
-// // //           style={styles.input}
-// // //           placeholder="מה רואים בקובץ? (יוצג לכולם)"
-// // //           multiline
-// // //           onChangeText={setDescription}
-// // //         />
-
-// // //         {target === 'group' && (
-// // //           <View style={styles.secretSection}>
-// // //             <Text style={styles.sectionTitle}>🤐 הגדרת מסרים סודיים</Text>
-            
-// // //             <View style={styles.toggleRow}>
-// // //               <TouchableOpacity 
-// // //                 style={[styles.toggleBtn, isUniform && styles.activeToggle]} 
-// // //                 onPress={() => setIsUniform(true)}
-// // //               >
-// // //                 <Text style={isUniform ? styles.whiteText : {}}>מסר אחיד</Text>
-// // //               </TouchableOpacity>
-// // //               <TouchableOpacity 
-// // //                 style={[styles.toggleBtn, !isUniform && styles.activeToggle]} 
-// // //                 onPress={() => setIsUniform(false)}
-// // //               >
-// // //                 <Text style={!isUniform ? styles.whiteText : {}}>מסר אישי</Text>
-// // //               </TouchableOpacity>
-// // //             </View>
-
-// // //             {isUniform && (
-// // //               <TextInput 
-// // //                 style={[styles.input, styles.uniformInput]} 
-// // //                 placeholder="כתוב כאן את המסר הסודי לכולם..." 
-// // //                 onChangeText={setUniformMessage}
-// // //               />
+// // //           <TouchableOpacity style={styles.mediaCard} onPress={pickFile}>
+// // //             {file ? <Image source={{ uri: file.uri }} style={styles.fullImage} /> : (
+// // //               <Text style={{color: '#718096'}}>📷 לחץ לבחירת תמונה</Text>
 // // //             )}
+// // //           </TouchableOpacity>
 
-// // //             {/* חיפוש חברים עם Autocomplete וכפתור X */}
-// // //             <View style={styles.searchWrapper}>
-// // //               <TextInput 
-// // //                 style={styles.searchInput} 
-// // //                 placeholder="🔍 חפש חבר להוספה..." 
-// // //                 value={searchQuery}
-// // //                 onChangeText={handleSearch}
-// // //               />
-// // //               {searchQuery.length > 0 && (
-// // //                 <TouchableOpacity onPress={clearSearch} style={styles.clearIcon}>
-// // //                   <Text style={{fontWeight:'bold', color: '#666'}}>X</Text>
-// // //                 </TouchableOpacity>
+// // //           <TextInput style={styles.captionInput} placeholder="תיאור גלוי..." multiline onChangeText={setDescription} />
+
+// // //           {target === 'group' && (
+// // //             <View style={styles.cryptoSection}>
+// // //               <Text style={styles.sectionTitle}>🔐 הגדרות הצפנה</Text>
+              
+// // //               {!sendMode && (
+// // //                 <View style={styles.modeGrid}>
+// // //                   <TouchableOpacity style={styles.modeCard} onPress={() => setSendMode('group')}>
+// // //                     <Text style={styles.modeLabel}>לכל הקבוצה</Text>
+// // //                   </TouchableOpacity>
+// // //                   <TouchableOpacity style={styles.modeCard} onPress={() => {
+// // //                     setSendMode('individual');
+// // //                     updateFilteredList('', selectedRecipients);
+// // //                   }}>
+// // //                     <Text style={styles.modeLabel}>בחירת חברים</Text>
+// // //                   </TouchableOpacity>
+// // //                 </View>
 // // //               )}
-// // //             </View>
 
-// // //             <View style={styles.membersList}>
-// // //               {filteredMembers.map(member => (
-// // //                 <View key={member} style={styles.memberCard}>
-// // //                   <TouchableOpacity 
-// // //                     style={[styles.checkbox, selectedMessages[member] !== undefined && styles.checked]} 
-// // //                     onPress={() => toggleMember(member)}
-// // //                   />
-// // //                   <View style={{flex: 1, marginRight: 10}}>
-// // //                     <Text style={styles.memberName}>{member}</Text>
-// // //                     {!isUniform && selectedMessages[member] !== undefined && (
-// // //                       <TextInput 
-// // //                         style={styles.individualInput}
-// // //                         placeholder={`מסר סודי ל${member}...`}
-// // //                         onChangeText={(txt) => updateIndividualMessage(member, txt)}
-// // //                         autoFocus
-// // //                       />
-// // //                     )}
+// // //               {sendMode === 'individual' && !activeRecipient && (
+// // //                 <View>
+// // //                   <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom: 5}}>
+// // //                     <TouchableOpacity onPress={() => setSendMode(null)}><Text style={{color:'red'}}>✖ ביטול</Text></TouchableOpacity>
+// // //                     <Text style={styles.smallLabel}>בחר חבר להוספת מסר:</Text>
+// // //                   </View>
+// // //                   <TextInput style={styles.searchBar} placeholder="חפש שם..." onChangeText={handleUserSearch} value={searchQuery} />
+// // //                   {filteredMembers.map(m => (
+// // //                     <TouchableOpacity key={m.username} style={styles.userRow} onPress={() => setActiveRecipient(m)}>
+// // //                       <Text style={styles.userRowText}>👤 {m.username}</Text>
+// // //                       <Text style={{color: '#3182CE', fontSize: 12}}>בחר +</Text>
+// // //                     </TouchableOpacity>
+// // //                   ))}
+// // //                   {filteredMembers.length === 0 && <Text style={{textAlign:'center', color:'#999'}}>אין חברים נוספים לבחירה</Text>}
+// // //                 </View>
+// // //               )}
+
+// // //               {activeRecipient && (
+// // //                 <View style={styles.messageEditor}>
+// // //                   <Text style={styles.smallLabel}>מסר סודי ל: {activeRecipient.username}</Text>
+// // //                   <TextInput style={styles.secretInput} placeholder="כתוב מסר..." multiline value={currentSecretMessage} onChangeText={setCurrentSecretMessage} autoFocus />
+// // //                   <View style={styles.editorButtons}>
+// // //                     <TouchableOpacity style={styles.cancelBtn} onPress={() => setActiveRecipient(null)}><Text>חזור</Text></TouchableOpacity>
+// // //                     <TouchableOpacity style={styles.saveBtn} onPress={saveMessageToRecipient}><Text style={{color:'#fff'}}>שמור ✅</Text></TouchableOpacity>
 // // //                   </View>
 // // //                 </View>
-// // //               ))}
+// // //               )}
+
+// // //               {Object.keys(selectedRecipients).length > 0 && (
+// // //                 <View style={styles.summaryList}>
+// // //                   <Text style={styles.summaryTitle}>נמענים שנבחרו:</Text>
+// // //                   {Object.entries(selectedRecipients).map(([name, msg]) => (
+// // //                     <View key={name} style={styles.badge}>
+// // //                       <TouchableOpacity onPress={() => {
+// // //                         const n = {...selectedRecipients}; delete n[name];
+// // //                         setSelectedRecipients(n);
+// // //                         updateFilteredList(searchQuery, n);
+// // //                       }}><Text style={{color:'red'}}>🗑️</Text></TouchableOpacity>
+// // //                       <Text style={styles.badgeText}>{name}: {msg}</Text>
+// // //                     </View>
+// // //                   ))}
+// // //                 </View>
+// // //               )}
 // // //             </View>
-// // //           </View>
-// // //         )}
+// // //           )}
 
-// // //         <TouchableOpacity style={styles.submitButton} onPress={handlePublish} disabled={loading}>
-// // //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>פרסם פוסט סטגנוגרפי 🚀</Text>}
-// // //         </TouchableOpacity>
-
-// // //       </ScrollView>
+// // //           <TouchableOpacity style={styles.submitButton} onPress={handlePublish} disabled={loading}>
+// // //             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>פרסם פוסט</Text>}
+// // //           </TouchableOpacity>
+// // //         </ScrollView>
+// // //       </KeyboardAvoidingView>
 // // //     </SafeAreaView>
 // // //   );
 // // // };
 
 // // // const styles = StyleSheet.create({
 // // //   container: { flex: 1, backgroundColor: '#fff' },
-// // //   scrollContent: { padding: 20 },
-// // //   title: { fontSize: 22, fontWeight: 'bold', color: '#075E54', textAlign: 'center', marginBottom: 20 },
-// // //   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, textAlign: 'right' },
-// // //   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#D32F2F', textAlign: 'right', marginBottom: 15 },
-  
-// // //   filePicker: { height: 180, borderWidth: 2, borderColor: '#075E54', borderStyle: 'dashed', borderRadius: 15, marginBottom: 20, backgroundColor: '#F5F5F5', overflow: 'hidden' },
-// // //   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-// // //   filePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 10 },
-// // //   filePickerText: { color: '#075E54', fontWeight: 'bold', textAlign: 'center', marginTop: 10 },
-
-// // //   input: { backgroundColor: '#F9F9F9', borderRadius: 10, padding: 12, textAlign: 'right', marginBottom: 15, borderWidth: 1, borderColor: '#E0E0E0' },
-// // //   uniformInput: { borderColor: '#FFCDD2', borderRightWidth: 8 },
-  
-// // //   secretSection: { backgroundColor: '#FFF9F9', padding: 15, borderRadius: 15, marginBottom: 20, borderWidth: 1, borderColor: '#FFEBEE' },
-// // //   toggleRow: { flexDirection: 'row-reverse', marginBottom: 15 },
-// // //   toggleBtn: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#eee', borderRadius: 8, marginLeft: 5 },
-// // //   activeToggle: { backgroundColor: '#D32F2F' },
-// // //   whiteText: { color: '#fff', fontWeight: 'bold' },
-
-// // //   searchWrapper: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 10 },
-// // //   searchInput: { flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, textAlign: 'right', borderWidth: 1, borderColor: '#ccc' },
-// // //   clearIcon: { position: 'absolute', left: 10, padding: 5 },
-
-// // //   membersList: { marginTop: 10 },
-// // //   memberCard: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', padding: 10, borderRadius: 8, marginBottom: 8, elevation: 1 },
-// // //   checkbox: { width: 22, height: 22, borderWidth: 2, borderColor: '#D32F2F', borderRadius: 5, marginLeft: 10 },
-// // //   checked: { backgroundColor: '#D32F2F' },
-// // //   memberName: { fontSize: 16, fontWeight: 'bold', textAlign: 'right' },
-// // //   individualInput: { borderBottomWidth: 1, borderColor: '#D32F2F', padding: 4, textAlign: 'right', fontSize: 14, marginTop: 5 },
-
-// // //   submitButton: { backgroundColor: '#075E54', padding: 18, borderRadius: 30, alignItems: 'center', marginTop: 10 },
+// // //   scrollContent: { padding: 15 },
+// // //   headerTitle: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
+// // //   mediaCard: { height: 150, backgroundColor: '#f9f9f9', borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderStyle: 'dashed', marginBottom: 15 },
+// // //   fullImage: { width: '100%', height: '100%', borderRadius: 10 },
+// // //   captionInput: { backgroundColor: '#f0f0f0', padding: 10, borderRadius: 8, fontSize: 16, textAlign: 'right', marginBottom: 15 },
+// // //   cryptoSection: { backgroundColor: '#f0f7ff', padding: 15, borderRadius: 15, borderWidth: 1, borderColor: '#d0e5ff' },
+// // //   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2b6cb0', marginBottom: 10, textAlign: 'center' },
+// // //   modeGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+// // //   modeCard: { flex: 0.48, backgroundColor: '#fff', padding: 12, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
+// // //   modeLabel: { fontSize: 14, fontWeight: 'bold' },
+// // //   smallLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'right' },
+// // //   searchBar: { backgroundColor: '#fff', padding: 8, borderRadius: 8, fontSize: 14, textAlign: 'right', marginBottom: 8, borderWidth: 1, borderColor: '#ddd' },
+// // //   userRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#fff', borderRadius: 8, marginBottom: 4, borderWidth: 1, borderColor: '#eee' },
+// // //   userRowText: { fontSize: 14 },
+// // //   messageEditor: { backgroundColor: '#fff', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#3182ce' },
+// // //   secretInput: { backgroundColor: '#f9f9f9', padding: 10, borderRadius: 8, fontSize: 15, textAlign: 'right', minHeight: 60, marginTop: 5 },
+// // //   editorButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+// // //   saveBtn: { backgroundColor: '#38a169', padding: 8, borderRadius: 8, flex: 0.5, alignItems: 'center' },
+// // //   cancelBtn: { padding: 8, flex: 0.4, alignItems: 'center' },
+// // //   summaryList: { marginTop: 15 },
+// // //   summaryTitle: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 5 },
+// // //   badge: { flexDirection: 'row', backgroundColor: '#fff', padding: 8, borderRadius: 8, marginBottom: 5, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#eee' },
+// // //   badgeText: { fontSize: 13, textAlign: 'right' },
+// // //   submitButton: { backgroundColor: '#2b6cb0', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 20 },
 // // //   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 // // // });
 
@@ -1104,761 +1011,943 @@
 // // import React, { useState, useEffect } from 'react';
 // // import { 
 // //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-// //   ScrollView, Alert, ActivityIndicator, Image 
+// //   ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform 
 // // } from 'react-native';
 // // import { SafeAreaView } from 'react-native-safe-area-context';
 // // import * as DocumentPicker from '@react-native-documents/picker';
 // // import { BASE_URL } from '../api/Constants';
 
 // // const CreatePostScreen = ({ route, navigation }: any) => {
-// //   const { target, groupId, groupName, userName } = route.params || {};
+// //   const { target, groupId, userName } = route.params || {};
 
 // //   const [loading, setLoading] = useState(false);
 // //   const [description, setDescription] = useState('');
 // //   const [file, setFile] = useState<any>(null);
 
-// //   // --- ניהול חברים וחיפוש ---
-// //   const [allMembers, setAllMembers] = useState<string[]>([]); // הרשימה המלאה מהשרת
-// //   const [filteredMembers, setFilteredMembers] = useState<string[]>([]); // הרשימה המוצגת (מסוננת)
+// //   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+// //   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
 // //   const [searchQuery, setSearchQuery] = useState('');
   
-// //   // --- ניהול מסרים סודיים ---
-// //   const [selectedMembers, setSelectedMembers] = useState<string[]>([]); 
-// //   const [isUniform, setIsUniform] = useState(true); 
-// //   const [uniformMessage, setUniformMessage] = useState('');
-// //   const [individualMessages, setIndividualMessages] = useState<{[key: string]: string}>({});
+// //   const [sendMode, setSendMode] = useState<'individual' | 'group' | null>(null);
+// //   const [activeRecipient, setActiveRecipient] = useState<any>(null); 
+// //   const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+// //   const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
 
-// //   // 1. שליפת חברים מהשרת (עם טיפול בשגיאות למניעת מסך שחור)
 // //   useEffect(() => {
-// //     const fetchMembers = async () => {
-// //       try {
-// //         const response = await fetch(`${BASE_URL}/api/groups/${groupId}/members`);
-// //         const data = await response.json();
-// //         const others = Array.isArray(data) ? data.filter((m: string) => m !== userName) : [];
-// //         setAllMembers(others);
-// //         setFilteredMembers(others);
-// //       } catch (e) {
-// //         console.error("Fetch members failed", e);
-// //         // רשימת דוגמה לטסטים אם השרת לא זמין
-// //         const testMembers = ["אבי כהן", "מיכל לוי", "דניאל גבאי", "נועה זיו"];
-// //         setAllMembers(testMembers);
-// //         setFilteredMembers(testMembers);
-// //       }
-// //     };
-// //     if (target === 'group') fetchMembers();
+// //     if (target === 'group' && groupId) {
+// //       fetch(`${BASE_URL}/groups/${groupId}/members`)
+// //         .then(res => res.json())
+// //         .then(data => {
+// //           setGroupMembers(data);
+// //           setFilteredMembers(data);
+// //         })
+// //         .catch(err => console.error(err));
+// //     }
 // //   }, [groupId]);
 
-// //   // 2. סינון אוטומטי בזמן הקלדה (Autocomplete)
-// //   const handleSearch = (text: string) => {
-// //     setSearchQuery(text);
-// //     const filtered = allMembers.filter(m => 
-// //       m.toLowerCase().includes(text.toLowerCase())
+// //   const updateFilteredList = (text: string, currentSelected: any) => {
+// //     const remaining = groupMembers.filter(m => !currentSelected[m.username]);
+// //     const filtered = remaining.filter(m => 
+// //       m.username?.toLowerCase().includes(text.toLowerCase())
 // //     );
 // //     setFilteredMembers(filtered);
 // //   };
 
-// //   const toggleMember = (name: string) => {
-// //     if (selectedMembers.includes(name)) {
-// //       setSelectedMembers(prev => prev.filter(m => m !== name));
+// //   const handleUserSearch = (text: string) => {
+// //     setSearchQuery(text);
+// //     updateFilteredList(text, selectedRecipients);
+// //   };
+
+// //   const saveMessageToRecipient = () => {
+// //     if (!currentSecretMessage.trim()) return Alert.alert("חסר מסר", "כתוב משהו סודי...");
+// //     const newSelected = { ...selectedRecipients };
+// //     if (sendMode === 'group') {
+// //       groupMembers.forEach(m => { newSelected[m.username] = currentSecretMessage; });
+// //       setSendMode(null);
 // //     } else {
-// //       setSelectedMembers(prev => [...prev, name]);
+// //       newSelected[activeRecipient.username] = currentSecretMessage;
+// //       setActiveRecipient(null);
+// //       setSearchQuery('');
 // //     }
+// //     setSelectedRecipients(newSelected);
+// //     setCurrentSecretMessage('');
+// //     updateFilteredList('', newSelected);
 // //   };
 
 // //   const pickFile = async () => {
 // //     try {
-// //       const results = await DocumentPicker.pick({
-// //         type: [DocumentPicker.types.images, DocumentPicker.types.video, DocumentPicker.types.pdf],
+// //       const res = await DocumentPicker.pick({
+// //         // מאפשר לבחור כל סוג קובץ (PDF, תמונות, וידאו וכו')
+// //         type: [DocumentPicker.types.allFiles], 
 // //       });
-// //       setFile(results[0]);
-// //     } catch (err) {
-// //       console.log("Picker cancelled or failed");
+// //       setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
+// //     } catch (e) {
+// //       console.log("User cancelled picker");
 // //     }
 // //   };
 
 // //   const handlePublish = async () => {
-// //     if (!file) return Alert.alert("חסר קובץ", "אנא בחר תמונה או מסמך");
+// //     if (!file) return Alert.alert("עצור!", "חובה לבחור קובץ לפני הפרסום");
 // //     setLoading(true);
-
-// //     const finalMessages: {[key: string]: string} = {};
-// //     selectedMembers.forEach(m => {
-// //       finalMessages[m] = isUniform ? uniformMessage : (individualMessages[m] || "");
-// //     });
-
 // //     const formData = new FormData();
-// //     formData.append('file', { uri: file.uri, type: file.type, name: file.name } as any);
+// //     formData.append('file', { uri: file.uri, type: file.type || 'application/octet-stream', name: file.name || 'file' } as any);
 // //     formData.append('description', description);
 // //     formData.append('senderUsername', userName);
 // //     formData.append('target', target === 'group' ? groupId : 'world');
-// //     formData.append('userMessagesJson', JSON.stringify(finalMessages));
-
-// //     try {
-// //       const res = await fetch(`${BASE_URL}/api/posts/create`, { method: 'POST', body: formData });
-// //       if (res.ok) {
-// //         Alert.alert("הצלחה", "הפוסט פורסם!");
-// //         navigation.goBack();
-// //       }
-// //     } catch (e) {
-// //       Alert.alert("שגיאה", "נכשל בחיבור לשרת");
-// //     } finally {
-// //       setLoading(false);
+// //     if (Object.keys(selectedRecipients).length > 0) {
+// //       formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
 // //     }
+// //     try {
+// //       const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+// //       if (res.ok) navigation.goBack();
+// //       else Alert.alert("שגיאה בפרסום");
+// //     } catch (e) { Alert.alert("שגיאת חיבור"); } finally { setLoading(false); }
 // //   };
+
+// //   const isImage = file?.type?.startsWith('image/');
 
 // //   return (
 // //     <SafeAreaView style={styles.container}>
-// //       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-// //         <Text style={styles.headerTitle}>יצירת פוסט ב-{groupName}</Text>
-
-// //         {/* בחירת קובץ */}
-// //         <TouchableOpacity style={styles.fileUploadBox} onPress={pickFile}>
-// //           {file ? (
-// //             <Text style={styles.fileSelectedText}>✅ קובץ נבחר: {file.name}</Text>
-// //           ) : (
-// //             <Text style={styles.filePlaceholderText}>📁 לחץ להעלאת תמונה / וידאו / PDF</Text>
-// //           )}
-// //         </TouchableOpacity>
-
-// //         <Text style={styles.label}>תיאור גלוי (לכולם):</Text>
-// //         <TextInput 
-// //           style={styles.input} 
-// //           placeholder="מה רואים בתמונה?" 
-// //           onChangeText={setDescription}
-// //           multiline
-// //         />
-
-// //         <View style={styles.divider} />
-
-// //         {/* אזור מסר סודי */}
-// //         <View style={styles.secretCard}>
-// //           <Text style={styles.secretTitle}>🤐 הגדרת מסרים סודיים</Text>
+// //       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+// //         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-// //           <View style={styles.tabContainer}>
-// //             <TouchableOpacity 
-// //               style={[styles.tab, isUniform && styles.activeTab]} 
-// //               onPress={() => setIsUniform(true)}
-// //             >
-// //               <Text style={isUniform ? styles.activeTabText : styles.tabText}>מסר אחיד</Text>
-// //             </TouchableOpacity>
-// //             <TouchableOpacity 
-// //               style={[styles.tab, !isUniform && styles.activeTab]} 
-// //               onPress={() => setIsUniform(false)}
-// //             >
-// //               <Text style={!isUniform ? styles.activeTabText : styles.tabText}>מסר אישי</Text>
-// //             </TouchableOpacity>
+// //           <Text style={styles.headerTitle}>יצירת פוסט חכם ✨</Text>
+
+// //           {/* אזור בחירת קובץ מעוצב */}
+// //           <TouchableOpacity style={[styles.mediaCard, file && styles.mediaCardActive]} onPress={pickFile}>
+// //             {file ? (
+// //               isImage ? (
+// //                 <Image source={{ uri: file.uri }} style={styles.fullImage} />
+// //               ) : (
+// //                 <View style={styles.fileInfo}>
+// //                   <Text style={styles.fileEmoji}>📄</Text>
+// //                   <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+// //                 </View>
+// //               )
+// //             ) : (
+// //               <View style={styles.uploadPlaceholder}>
+// //                 <View style={styles.plusCircle}><Text style={styles.plusText}>+</Text></View>
+// //                 <Text style={styles.uploadText}>לחץ לבחירת כל סוג קובץ</Text>
+// //               </View>
+// //             )}
+// //           </TouchableOpacity>
+
+// //           <View style={styles.inputContainer}>
+// //             <Text style={styles.inputLabel}>מה בראש שלך? ✍️</Text>
+// //             <TextInput 
+// //               style={styles.captionInput} 
+// //               placeholder="כתוב תיאור גלוי לכולם..." 
+// //               multiline 
+// //               onChangeText={setDescription} 
+// //               placeholderTextColor="#A0AEC0"
+// //             />
 // //           </View>
 
-// //           {isUniform && (
-// //             <TextInput 
-// //               style={[styles.input, styles.uniformInput]} 
-// //               placeholder="כתוב את המסר הסודי לכל הנבחרים..." 
-// //               onChangeText={setUniformMessage}
-// //             />
+// //           {target === 'group' && (
+// //             <View style={styles.cryptoBox}>
+// //               <View style={styles.cryptoHeader}>
+// //                 <Text style={styles.cryptoEmoji}>🔐</Text>
+// //                 <Text style={styles.cryptoTitle}>הצפנה לפי נמענים</Text>
+// //               </View>
+              
+// //               {!sendMode && (
+// //                 <View style={styles.modeGrid}>
+// //                   <TouchableOpacity style={[styles.modeCard, styles.groupCard]} onPress={() => setSendMode('group')}>
+// //                     <Text style={styles.cardEmoji}>📣</Text>
+// //                     <Text style={styles.cardText}>כל הקבוצה</Text>
+// //                   </TouchableOpacity>
+// //                   <TouchableOpacity style={[styles.modeCard, styles.individualCard]} onPress={() => {
+// //                     setSendMode('individual');
+// //                     updateFilteredList('', selectedRecipients);
+// //                   }}>
+// //                     <Text style={styles.cardEmoji}>🎯</Text>
+// //                     <Text style={styles.cardText}>בחירת חברים</Text>
+// //                   </TouchableOpacity>
+// //                 </View>
+// //               )}
+
+// //               {sendMode === 'individual' && !activeRecipient && (
+// //                 <View style={styles.selectionArea}>
+// //                   <View style={styles.selectionHeader}>
+// //                     <TouchableOpacity onPress={() => setSendMode(null)} style={styles.backBtn}>
+// //                       <Text style={styles.backBtnText}>✕ סגור</Text>
+// //                     </TouchableOpacity>
+// //                     <Text style={styles.searchTitle}>מי יראה את המסר?</Text>
+// //                   </View>
+// //                   <TextInput style={styles.searchBar} placeholder="חפש חבר ברשימה..." onChangeText={handleUserSearch} value={searchQuery} />
+// //                   <ScrollView style={styles.memberList} nestedScrollEnabled>
+// //                     {filteredMembers.map(m => (
+// //                       <TouchableOpacity key={m.username} style={styles.userRow} onPress={() => setActiveRecipient(m)}>
+// //                         <Text style={styles.userRowText}>👤 {m.username}</Text>
+// //                         <View style={styles.addCircle}><Text style={styles.addPlus}>+</Text></View>
+// //                       </TouchableOpacity>
+// //                     ))}
+// //                     {filteredMembers.length === 0 && <Text style={styles.emptyText}>אין חברים נוספים...</Text>}
+// //                   </ScrollView>
+// //                 </View>
+// //               )}
+
+// //               {activeRecipient && (
+// //                 <View style={styles.editorContainer}>
+// //                   <Text style={styles.editorLabel}>מסר סודי עבור: <Text style={{color:'#667EEA'}}>{activeRecipient.username}</Text></Text>
+// //                   <TextInput 
+// //                     style={styles.secretInput} 
+// //                     placeholder="הקלד כאן את המסר שיוצפן..." 
+// //                     multiline 
+// //                     value={currentSecretMessage} 
+// //                     onChangeText={setCurrentSecretMessage} 
+// //                     autoFocus 
+// //                   />
+// //                   <View style={styles.editorActions}>
+// //                     <TouchableOpacity style={styles.saveBtn} onPress={saveMessageToRecipient}>
+// //                       <Text style={styles.saveBtnText}>שמור ✅</Text>
+// //                     </TouchableOpacity>
+// //                     <TouchableOpacity style={styles.cancelBtn} onPress={() => setActiveRecipient(null)}>
+// //                       <Text style={styles.cancelBtnText}>ביטול</Text>
+// //                     </TouchableOpacity>
+// //                   </View>
+// //                 </View>
+// //               )}
+
+// //               {/* רשימת סיכום מעוצבת כ-Badges */}
+// //               {Object.keys(selectedRecipients).length > 0 && (
+// //                 <View style={styles.summarySection}>
+// //                   <Text style={styles.summaryHeading}>נמענים מוצפנים:</Text>
+// //                   <View style={styles.badgeContainer}>
+// //                     {Object.entries(selectedRecipients).map(([name, msg]) => (
+// //                       <View key={name} style={styles.badge}>
+// //                         <Text style={styles.badgeName}>{name}</Text>
+// //                         <TouchableOpacity onPress={() => {
+// //                           const n = {...selectedRecipients}; delete n[name];
+// //                           setSelectedRecipients(n);
+// //                           updateFilteredList(searchQuery, n);
+// //                         }} style={styles.deleteBadge}>
+// //                           <Text style={styles.deleteBadgeText}>✕</Text>
+// //                         </TouchableOpacity>
+// //                       </View>
+// //                     ))}
+// //                   </View>
+// //                 </View>
+// //               )}
+// //             </View>
 // //           )}
 
-// //           <View style={styles.searchWrapper}>
-// //             <TextInput 
-// //               style={styles.searchInput} 
-// //               placeholder="🔍 חפש חבר להוספה..." 
-// //               value={searchQuery}
-// //               onChangeText={handleSearch}
-// //             />
-// //             {searchQuery !== '' && (
-// //               <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearBtn}>
-// //                 <Text>✕</Text>
-// //               </TouchableOpacity>
+// //           <TouchableOpacity style={[styles.mainButton, loading && styles.btnDisabled]} onPress={handlePublish} disabled={loading}>
+// //             {loading ? <ActivityIndicator color="#fff" /> : (
+// //               <Text style={styles.mainButtonText}>שלח פוסט לעולם 🚀</Text>
 // //             )}
-// //           </View>
+// //           </TouchableOpacity>
 
-// //           <View style={styles.membersList}>
-// //             {filteredMembers.map((member) => {
-// //               const isSelected = selectedMembers.includes(member);
-// //               return (
-// //                 <View key={member} style={styles.memberRow}>
-// //                   <View style={styles.memberTop}>
-// //                     <TouchableOpacity 
-// //                       style={[styles.checkbox, isSelected && styles.checkedBox]} 
-// //                       onPress={() => toggleMember(member)} 
-// //                     />
-// //                     <Text style={styles.memberName}>{member}</Text>
-// //                   </View>
-
-// //                   {!isUniform && isSelected && (
-// //                     <TextInput 
-// //                       style={styles.personalInput}
-// //                       placeholder={`מסר סודי ייחודי ל-${member}...`}
-// //                       onChangeText={(text) => setIndividualMessages({...individualMessages, [member]: text})}
-// //                       autoFocus
-// //                     />
-// //                   )}
-// //                 </View>
-// //               );
-// //             })}
-// //           </View>
-// //         </View>
-
-// //         <TouchableOpacity 
-// //           style={[styles.publishBtn, loading && {opacity: 0.6}]} 
-// //           onPress={handlePublish}
-// //           disabled={loading}
-// //         >
-// //           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.publishBtnText}>פרסם פוסט 🚀</Text>}
-// //         </TouchableOpacity>
-
-// //       </ScrollView>
+// //         </ScrollView>
+// //       </KeyboardAvoidingView>
 // //     </SafeAreaView>
 // //   );
 // // };
 
 // // const styles = StyleSheet.create({
-// //   container: { flex: 1, backgroundColor: '#F0F2F5' },
-// //   scrollContent: { padding: 16 },
-// //   headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#075E54', textAlign: 'center', marginBottom: 20 },
-// //   fileUploadBox: { height: 120, backgroundColor: '#fff', borderStyle: 'dashed', borderWidth: 2, borderColor: '#075E54', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-// //   fileSelectedText: { color: '#075E54', fontWeight: 'bold' },
-// //   filePlaceholderText: { color: '#666' },
-// //   label: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 5, color: '#444' },
-// //   input: { backgroundColor: '#fff', padding: 12, borderRadius: 10, textAlign: 'right', borderWidth: 1, borderColor: '#ddd', marginBottom: 15 },
-// //   divider: { height: 1, backgroundColor: '#ddd', marginVertical: 15 },
+// //   container: { flex: 1, backgroundColor: '#F8FAFC' },
+// //   scrollContent: { padding: 20 },
+// //   headerTitle: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: '#1A202C', marginBottom: 20 },
   
-// //   secretCard: { backgroundColor: '#fff', borderRadius: 15, padding: 15, elevation: 3 },
-// //   secretTitle: { fontSize: 18, fontWeight: 'bold', color: '#D32F2F', textAlign: 'right', marginBottom: 15 },
-// //   tabContainer: { flexDirection: 'row-reverse', backgroundColor: '#F0F0F0', borderRadius: 10, padding: 4, marginBottom: 15 },
-// //   tab: { flex: 1, padding: 10, alignItems: 'center', borderRadius: 8 },
-// //   activeTab: { backgroundColor: '#D32F2F' },
-// //   tabText: { color: '#666' },
-// //   activeTabText: { color: '#fff', fontWeight: 'bold' },
-// //   uniformInput: { borderColor: '#D32F2F', borderRightWidth: 5 },
+// //   // בחירת מדיה
+// //   mediaCard: { height: 160, backgroundColor: '#EDF2F7', borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#CBD5E0', borderStyle: 'dashed', marginBottom: 20 },
+// //   mediaCardActive: { borderStyle: 'solid', borderColor: '#667EEA', backgroundColor: '#fff' },
+// //   fullImage: { width: '100%', height: '100%', borderRadius: 22 },
+// //   uploadPlaceholder: { alignItems: 'center' },
+// //   plusCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+// //   plusText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+// //   uploadText: { color: '#4A5568', fontWeight: '600', fontSize: 14 },
+// //   fileInfo: { alignItems: 'center', padding: 10 },
+// //   fileEmoji: { fontSize: 40, marginBottom: 5 },
+// //   fileName: { fontSize: 14, color: '#2D3748', fontWeight: 'bold' },
 
-// //   searchWrapper: { flexDirection: 'row-reverse', alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee', marginBottom: 10 },
-// //   searchInput: { flex: 1, padding: 10, textAlign: 'right', fontSize: 16 },
-// //   clearBtn: { padding: 10 },
+// //   // תיאור
+// //   inputContainer: { marginBottom: 20 },
+// //   inputLabel: { fontSize: 15, fontWeight: 'bold', color: '#4A5568', marginBottom: 8, textAlign: 'right' },
+// //   captionInput: { backgroundColor: '#fff', padding: 15, borderRadius: 16, fontSize: 16, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', color: '#2D3748' },
 
-// //   membersList: { marginTop: 5 },
-// //   memberRow: { backgroundColor: '#F9F9F9', padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#eee' },
-// //   memberTop: { flexDirection: 'row-reverse', alignItems: 'center' },
-// //   checkbox: { width: 22, height: 22, borderWidth: 2, borderColor: '#D32F2F', borderRadius: 6, marginLeft: 12 },
-// //   checkedBox: { backgroundColor: '#D32F2F' },
-// //   memberName: { fontSize: 16, color: '#333' },
-// //   personalInput: { borderTopWidth: 1, borderTopColor: '#eee', marginTop: 10, paddingTop: 8, textAlign: 'right', color: '#D32F2F', fontWeight: '500' },
+// //   // תיבת הצפנה
+// //   cryptoBox: { backgroundColor: '#fff', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5, marginBottom: 20 },
+// //   cryptoHeader: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 15 },
+// //   cryptoEmoji: { fontSize: 22, marginLeft: 8 },
+// //   cryptoTitle: { fontSize: 18, fontWeight: 'bold', color: '#2D3748' },
+  
+// //   modeGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+// //   modeCard: { flex: 0.48, padding: 15, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+// //   groupCard: { backgroundColor: '#EBF8FF' },
+// //   individualCard: { backgroundColor: '#F0FFF4' },
+// //   cardEmoji: { fontSize: 28, marginBottom: 5 },
+// //   cardText: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
 
-// //   publishBtn: { backgroundColor: '#075E54', padding: 18, borderRadius: 30, alignItems: 'center', marginTop: 25, elevation: 5 },
-// //   publishBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+// //   // בחירת חברים
+// //   selectionArea: { marginTop: 10 },
+// //   selectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+// //   backBtnText: { color: '#E53E3E', fontWeight: 'bold' },
+// //   backBtn: { backgroundColor: '#FFF5F5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FEB2B2' },
+// //   searchTitle: { fontSize: 14, fontWeight: 'bold', color: '#4A5568' },
+// //   searchBar: { backgroundColor: '#F7FAFC', padding: 12, borderRadius: 12, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 10 },
+// //   memberList: { maxHeight: 150 },
+// //   userRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 12, backgroundColor: '#F8FAFC', borderRadius: 12, marginBottom: 6, alignItems: 'center' },
+// //   userRowText: { fontSize: 15, fontWeight: '500' },
+// //   addCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center' },
+// //   addPlus: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+// //   emptyText: { textAlign: 'center', color: '#A0AEC0', marginTop: 10 },
+
+// //   // עורך מסר
+// //   editorContainer: { backgroundColor: '#F7FAFC', padding: 15, borderRadius: 18, borderWidth: 1, borderColor: '#667EEA' },
+// //   editorLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 10 },
+// //   secretInput: { backgroundColor: '#fff', padding: 12, borderRadius: 12, textAlign: 'right', minHeight: 80, fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+// //   editorActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+// //   saveBtn: { backgroundColor: '#667EEA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
+// //   saveBtnText: { color: '#fff', fontWeight: 'bold' },
+// //   cancelBtn: { padding: 10 },
+// //   cancelBtnText: { color: '#718096' },
+
+// //   // באדג'ים של נמענים
+// //   summarySection: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#EDF2F7', paddingTop: 15 },
+// //   summaryHeading: { fontSize: 14, fontWeight: 'bold', color: '#4A5568', marginBottom: 10, textAlign: 'right' },
+// //   badgeContainer: { flexDirection: 'row-reverse', flexWrap: 'wrap' },
+// //   badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDF2F7', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, marginLeft: 8, marginBottom: 8 },
+// //   badgeName: { fontSize: 13, fontWeight: '600', color: '#2D3748' },
+// //   deleteBadge: { marginRight: 6, backgroundColor: '#CBD5E0', width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
+// //   deleteBadgeText: { fontSize: 10, color: '#fff', fontWeight: 'bold' },
+
+// //   // כפתור ראשי
+// //   mainButton: { backgroundColor: '#667EEA', padding: 18, borderRadius: 20, alignItems: 'center', marginTop: 10, marginBottom: 30, shadowColor: '#667EEA', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+// //   mainButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+// //   btnDisabled: { backgroundColor: '#A0AEC0', shadowOpacity: 0 }
 // // });
 
 // // export default CreatePostScreen;
 // import React, { useState, useEffect } from 'react';
 // import { 
 //   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-//   ScrollView, Alert, ActivityIndicator, FlatList 
+//   ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform 
 // } from 'react-native';
 // import { SafeAreaView } from 'react-native-safe-area-context';
+// import * as DocumentPicker from '@react-native-documents/picker';
 // import { BASE_URL } from '../api/Constants';
 
 // const CreatePostScreen = ({ route, navigation }: any) => {
-//   const { target, groupId, groupName, userName } = route.params || {};
+//   const { target, groupId, userName } = route.params || {};
 
-//   // רשימות חברים
-//   const [allMembers, setAllMembers] = useState<string[]>([]); // כל חברי הקבוצה מהשרת
-//   const [filteredResults, setFilteredResults] = useState<string[]>([]); // מה שצץ בחיפוש
+//   const [loading, setLoading] = useState(false);
+//   const [description, setDescription] = useState('');
+//   const [file, setFile] = useState<any>(null);
+
+//   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+//   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
 //   const [searchQuery, setSearchQuery] = useState('');
+  
+//   const [sendMode, setSendMode] = useState<'individual' | 'group' | null>(null);
+//   const [activeRecipient, setActiveRecipient] = useState<any>(null); 
+//   const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+//   const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
 
-//   // בחירות ומסרים
-//   const [selectedMembers, setSelectedMembers] = useState<string[]>([]); // חברים שנבחרו סופית
-//   const [individualMessages, setIndividualMessages] = useState<{[key: string]: string}>({});
-//   const [isUniform, setIsUniform] = useState(true);
-//   const [uniformMessage, setUniformMessage] = useState('');
-// const pickFile = async () => {
-//     try {
-//       const results = await DocumentPicker.pick({
-//         type: [DocumentPicker.types.images, DocumentPicker.types.video, DocumentPicker.types.pdf],
+//   useEffect(() => {
+//     if (target === 'group' && groupId) {
+//       fetch(`${BASE_URL}/groups/${groupId}/members`)
+//         .then(res => res.json())
+//         .then(data => {
+//           setGroupMembers(data);
+//           setFilteredMembers(data);
+//         })
+//         .catch(err => console.error(err));
+//     }
+//   }, [groupId]);
+
+//   const updateFilteredList = (text: string, currentSelected: any) => {
+//     const remaining = groupMembers.filter(m => !currentSelected[m.username]);
+//     const filtered = remaining.filter(m => 
+//       m.username?.toLowerCase().includes(text.toLowerCase())
+//     );
+//     setFilteredMembers(filtered);
+//   };
+
+//   const handleUserSearch = (text: string) => {
+//     setSearchQuery(text);
+//     updateFilteredList(text, selectedRecipients);
+//   };
+
+//   const saveMessageToRecipient = () => {
+//     if (!currentSecretMessage.trim()) return Alert.alert("חסר מסר", "כתוב משהו סודי...");
+    
+//     const newSelected = { ...selectedRecipients };
+    
+//     if (sendMode === 'group') {
+//       // לוגיקה שביקשת: רץ על כל חברי הקבוצה ומצפין עבורם את המסר
+//       groupMembers.forEach(m => {
+//         newSelected[m.username] = currentSecretMessage;
 //       });
-//       setFile(results[0]);
-//     } catch (err) {
-//       console.log("Picker cancelled or failed");
+//       setSendMode(null);
+//     } else {
+//       // בחירה פרטנית
+//       newSelected[activeRecipient.username] = currentSecretMessage;
+//       setActiveRecipient(null);
+//       setSearchQuery('');
+//     }
+
+//     setSelectedRecipients(newSelected);
+//     setCurrentSecretMessage('');
+//     updateFilteredList('', newSelected);
+//   };
+
+//   const pickFile = async () => {
+//     try {
+//       const res = await DocumentPicker.pick({
+//         type: [DocumentPicker.types.allFiles], 
+//       });
+//       setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
+//     } catch (e) {
+//       console.log("User cancelled picker");
 //     }
 //   };
 
 //   const handlePublish = async () => {
-//     if (!file) return Alert.alert("חסר קובץ", "אנא בחר תמונה או מסמך");
+//     if (!file) return Alert.alert("עצור!", "חובה לבחור קובץ לפני הפרסום");
 //     setLoading(true);
-
-//     const finalMessages: {[key: string]: string} = {};
-//     selectedMembers.forEach(m => {
-//       finalMessages[m] = isUniform ? uniformMessage : (individualMessages[m] || "");
-//     });
-
 //     const formData = new FormData();
-//     formData.append('file', { uri: file.uri, type: file.type, name: file.name } as any);
+//     formData.append('file', { uri: file.uri, type: file.type || 'application/octet-stream', name: file.name || 'file' } as any);
 //     formData.append('description', description);
 //     formData.append('senderUsername', userName);
 //     formData.append('target', target === 'group' ? groupId : 'world');
-//     formData.append('userMessagesJson', JSON.stringify(finalMessages));
-
+//     if (Object.keys(selectedRecipients).length > 0) {
+//       formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
+//     }
 //     try {
-//       const res = await fetch(`${BASE_URL}/api/posts/create`, { method: 'POST', body: formData });
-//       if (res.ok) {
-//         Alert.alert("הצלחה", "הפוסט פורסם!");
-//         navigation.goBack();
-//       }
-//     } catch (e) {
-//       Alert.alert("שגיאה", "נכשל בחיבור לשרת");
-//     } finally {
-//       setLoading(false);
-//     }
+//       const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+//       if (res.ok) navigation.goBack();
+//       else Alert.alert("שגיאה בפרסום");
+//     } catch (e) { Alert.alert("שגיאת חיבור"); } finally { setLoading(false); }
 //   };
+
+//   const isImage = file?.type?.startsWith('image/');
 
 //   return (
 //     <SafeAreaView style={styles.container}>
-//       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-//         <Text style={styles.headerTitle}>יצירת פוסט ב-{groupName}</Text>
-
-//         {/* בחירת קובץ */}
-//         <TouchableOpacity style={styles.fileUploadBox} onPress={pickFile}>
-//           {file ? (
-//             <Text style={styles.fileSelectedText}>✅ קובץ נבחר: {file.name}</Text>
-//           ) : (
-//             <Text style={styles.filePlaceholderText}>📁 לחץ להעלאת תמונה / וידאו / PDF</Text>
-//           )}
-//         </TouchableOpacity>
-
-//         <Text style={styles.label}>תיאור גלוי (לכולם):</Text>
-//         <TextInput 
-//           style={styles.input} 
-//           placeholder="מה רואים בתמונה?" 
-//           onChangeText={setDescription}
-//           multiline
-//         />
-
-//         <View style={styles.divider} />
-
-//         {/* אזור מסר סודי */}
-//         <View style={styles.secretCard}>
-//           <Text style={styles.secretTitle}>🤐 הגדרת מסרים סודיים</Text>
+//       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+//         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-//           <View style={styles.tabContainer}>
-//             <TouchableOpacity 
-//               style={[styles.tab, isUniform && styles.activeTab]} 
-//               onPress={() => setIsUniform(true)}
-//             >
-//               <Text style={isUniform ? styles.activeTabText : styles.tabText}>מסר אחיד</Text>
-//             </TouchableOpacity>
-//             <TouchableOpacity 
-//               style={[styles.tab, !isUniform && styles.activeTab]} 
-//               onPress={() => setIsUniform(false)}
-//             >
-//               <Text style={!isUniform ? styles.activeTabText : styles.tabText}>מסר אישי</Text>
-//             </TouchableOpacity>
-//           </View>
-//   // 1. שליפת חברי הקבוצה
-//   useEffect(() => {
-//     const fetchMembers = async () => {
-//       try {
-//         const response = await fetch(`${BASE_URL}/api/groups/${groupId}/members`);
-//         const data = await response.json();
-//         const others = data.filter((m: string) => m !== userName);
-//         setAllMembers(others);
-//       } catch (e) {
-//         // רשימת גיבוי לטסטים
-//         setAllMembers(["אברהם", "יצחק", "יעקב", "שרה", "רבקה", "רחל", "לאה"]);
-//       }
-//     };
-//     if (target === 'group') fetchMembers();
-//   }, []);
+//           <Text style={styles.headerTitle}>יצירת פוסט חכם ✨</Text>
 
-//   // 2. לוגיקת החיפוש (Autocomplete) - מופעל מ-2 אותיות
-//   const handleSearch = (text: string) => {
-//     setSearchQuery(text);
-//     if (text.length >= 2) {
-//       const filtered = allMembers.filter(m => 
-//         m.includes(text) && !selectedMembers.includes(m)
-//       );
-//       setFilteredResults(filtered);
-//     } else {
-//       setFilteredResults([]);
-//     }
-//   };
-
-//   // 3. בחירת חבר מהרשימה הקופצת
-//   const selectMember = (name: string) => {
-//     if (!selectedMembers.includes(name)) {
-//       setSelectedMembers([...selectedMembers, name]);
-//     }
-//     setSearchQuery(''); // מנקה את החיפוש אחרי בחירה
-//     setFilteredResults([]); // סוגר את הרשימה הקופצת
-//   };
-
-//   const removeMember = (name: string) => {
-//     setSelectedMembers(selectedMembers.filter(m => m !== name));
-//   };
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        
-//         <Text style={styles.headerTitle}>פוסט חדש ל-{groupName}</Text>
-
-//         {/* --- אזור החיפוש וההקפצה --- */}
-//         <View style={styles.searchSection}>
-//           <Text style={styles.label}>🔍 חפש חבר להוספת מסר סודי:</Text>
-//           <TextInput 
-//             style={styles.searchInput}
-//             placeholder="הקלד לפחות 2 אותיות..."
-//             value={searchQuery}
-//             onChangeText={handleSearch}
-//           />
-          
-//           {/* הרשימה ש"קופצת" מתחת לחיפוש */}
-//           {filteredResults.length > 0 && (
-//             <View style={styles.autocompleteDropdown}>
-//               {filteredResults.map(item => (
-//                 <TouchableOpacity 
-//                   key={item} 
-//                   style={styles.dropdownItem} 
-//                   onPress={() => selectMember(item)}
-//                 >
-//                   <Text style={styles.dropdownText}>{item}</Text>
-//                   <Text style={styles.addPlus}>+</Text>
-//                 </TouchableOpacity>
-//               ))}
-//             </View>
-//           )}
-//         </View>
-
-//         {/* --- רשימת הנבחרים והמסרים --- */}
-//         <View style={styles.selectedSection}>
-//           <Text style={styles.sectionTitle}>👥 חברים שנבחרו ({selectedMembers.length})</Text>
-          
-//           {selectedMembers.length === 0 && (
-//             <Text style={styles.emptyText}>טרם נבחרו חברים למסר סודי</Text>
-//           )}
-
-//           {selectedMembers.map(member => (
-//             <View key={member} style={styles.memberCard}>
-//               <View style={styles.memberHeader}>
-//                 <TouchableOpacity onPress={() => removeMember(member)}>
-//                   <Text style={styles.removeBtn}>✕ הסר</Text>
-//                 </TouchableOpacity>
-//                 <Text style={styles.memberName}>{member}</Text>
+//           <TouchableOpacity style={[styles.mediaCard, file && styles.mediaCardActive]} onPress={pickFile}>
+//             {file ? (
+//               isImage ? (
+//                 <Image source={{ uri: file.uri }} style={styles.fullImage} />
+//               ) : (
+//                 <View style={styles.fileInfo}>
+//                   <Text style={styles.fileEmoji}>📄</Text>
+//                   <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+//                 </View>
+//               )
+//             ) : (
+//               <View style={styles.uploadPlaceholder}>
+//                 <View style={styles.plusCircle}><Text style={styles.plusText}>+</Text></View>
+//                 <Text style={styles.uploadText}>לחץ לבחירת כל סוג קובץ</Text>
 //               </View>
+//             )}
+//           </TouchableOpacity>
 
-//               {/* שדה מסר אישי - מופיע רק אם לא נבחר "מסר אחיד" */}
-//               {!isUniform && (
-//                 <TextInput 
-//                   style={styles.personalMsgInput}
-//                   placeholder={`כתוב מסר סודי רק ל${member}...`}
-//                   onChangeText={(txt) => setIndividualMessages({...individualMessages, [member]: txt})}
-//                   multiline
-//                 />
+//           <View style={styles.inputContainer}>
+//             <Text style={styles.inputLabel}>מה בראש שלך? ✍️</Text>
+//             <TextInput 
+//               style={styles.captionInput} 
+//               placeholder="כתוב תיאור גלוי לכולם..." 
+//               multiline 
+//               onChangeText={setDescription} 
+//               placeholderTextColor="#A0AEC0"
+//             />
+//           </View>
+
+//           {target === 'group' && (
+//             <View style={styles.cryptoBox}>
+//               <View style={styles.cryptoHeader}>
+//                 <Text style={styles.cryptoEmoji}>🔐</Text>
+//                 <Text style={styles.cryptoTitle}>הצפנה לפי נמענים</Text>
+//               </View>
+              
+//               {!sendMode && (
+//                 <View style={styles.modeGrid}>
+//                   <TouchableOpacity style={[styles.modeCard, styles.groupCard]} onPress={() => setSendMode('group')}>
+//                     <Text style={styles.cardEmoji}>📣</Text>
+//                     <Text style={styles.cardText}>כל הקבוצה</Text>
+//                   </TouchableOpacity>
+//                   <TouchableOpacity style={[styles.modeCard, styles.individualCard]} onPress={() => {
+//                     setSendMode('individual');
+//                     updateFilteredList('', selectedRecipients);
+//                   }}>
+//                     <Text style={styles.cardEmoji}>🎯</Text>
+//                     <Text style={styles.cardText}>בחירת חברים</Text>
+//                   </TouchableOpacity>
+//                 </View>
+//               )}
+
+//               {sendMode === 'individual' && !activeRecipient && (
+//                 <View style={styles.selectionArea}>
+//                   <View style={styles.selectionHeader}>
+//                     <TouchableOpacity onPress={() => setSendMode(null)} style={styles.backBtn}>
+//                       <Text style={styles.backBtnText}>✕ סגור</Text>
+//                     </TouchableOpacity>
+//                     <Text style={styles.searchTitle}>מי יראה את המסר?</Text>
+//                   </View>
+//                   <TextInput style={styles.searchBar} placeholder="חפש חבר ברשימה..." onChangeText={handleUserSearch} value={searchQuery} />
+//                   <ScrollView style={styles.memberList} nestedScrollEnabled>
+//                     {filteredMembers.map(m => (
+//                       <TouchableOpacity key={m.username} style={styles.userRow} onPress={() => setActiveRecipient(m)}>
+//                         <Text style={styles.userRowText}>👤 {m.username}</Text>
+//                         <View style={styles.addCircle}><Text style={styles.addPlus}>+</Text></View>
+//                       </TouchableOpacity>
+//                     ))}
+//                   </ScrollView>
+//                 </View>
+//               )}
+
+//               {/* הלוגיקה החדשה: החלונית שביקשת שנפתחת גם עבור "כל הקבוצה" וגם עבור בודד */}
+//               {(activeRecipient || sendMode === 'group') && (
+//                 <View style={styles.editorContainer}>
+//                   <Text style={styles.editorLabel}>
+//                     {sendMode === 'group' ? "מסר עבור כל חברי הקבוצה:" : `מסר עבור: ${activeRecipient?.username}`}
+//                   </Text>
+//                   <TextInput 
+//                     style={styles.secretInput} 
+//                     placeholder="הקלד כאן את המסר שיוצפן..." 
+//                     multiline 
+//                     value={currentSecretMessage} 
+//                     onChangeText={setCurrentSecretMessage} 
+//                     autoFocus 
+//                   />
+//                   <View style={styles.editorActions}>
+//                     <TouchableOpacity style={styles.saveBtn} onPress={saveMessageToRecipient}>
+//                       <Text style={styles.saveBtnText}>{sendMode === 'group' ? "הצפן לכולם 🔐" : "שמור ✅"}</Text>
+//                     </TouchableOpacity>
+//                     <TouchableOpacity style={styles.cancelBtn} onPress={() => { setActiveRecipient(null); if(sendMode === 'group') setSendMode(null); }}>
+//                       <Text style={styles.cancelBtnText}>ביטול</Text>
+//                     </TouchableOpacity>
+//                   </View>
+//                 </View>
+//               )}
+
+//               {Object.keys(selectedRecipients).length > 0 && (
+//                 <View style={styles.summarySection}>
+//                   <Text style={styles.summaryHeading}>נמענים מוצפנים ({Object.keys(selectedRecipients).length}):</Text>
+//                   <View style={styles.badgeContainer}>
+//                     {Object.entries(selectedRecipients).map(([name, msg]) => (
+//                       <View key={name} style={styles.badge}>
+//                         <Text style={styles.badgeName}>{name}</Text>
+//                         <TouchableOpacity onPress={() => {
+//                           const n = {...selectedRecipients}; delete n[name];
+//                           setSelectedRecipients(n);
+//                           updateFilteredList(searchQuery, n);
+//                         }} style={styles.deleteBadge}>
+//                           <Text style={styles.deleteBadgeText}>✕</Text>
+//                         </TouchableOpacity>
+//                       </View>
+//                     ))}
+//                   </View>
+//                 </View>
 //               )}
 //             </View>
-//           ))}
-//         </View>
-
-//         {/* --- בחירת סוג מסר --- */}
-//         <View style={styles.messageTypeCard}>
-//           <View style={styles.toggleRow}>
-//             <TouchableOpacity 
-//               style={[styles.toggleBtn, isUniform && styles.activeToggle]} 
-//               onPress={() => setIsUniform(true)}
-//             >
-//               <Text style={isUniform ? styles.activeText : {}}>מסר אחיד לכולם</Text>
-//             </TouchableOpacity>
-//             <TouchableOpacity 
-//               style={[styles.toggleBtn, !isUniform && styles.activeToggle]} 
-//               onPress={() => setIsUniform(false)}
-//             >
-//               <Text style={!isUniform ? styles.activeText : {}}>מסר אישי לכל אחד</Text>
-//             </TouchableOpacity>
-//           </View>
-
-//           {isUniform && (
-//             <TextInput 
-//               style={styles.uniformInput}
-//               placeholder="כתוב כאן את המסר שכולם יראו..."
-//               onChangeText={setUniformMessage}
-//               multiline
-//             />
 //           )}
-//         </View>
 
-//       </ScrollView>
+//           <TouchableOpacity style={[styles.mainButton, loading && styles.btnDisabled]} onPress={handlePublish} disabled={loading}>
+//             {loading ? <ActivityIndicator color="#fff" /> : (
+//               <Text style={styles.mainButtonText}>שלח פוסט לעולם 🚀</Text>
+//             )}
+//           </TouchableOpacity>
+
+//         </ScrollView>
+//       </KeyboardAvoidingView>
 //     </SafeAreaView>
 //   );
 // };
 
 // const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: '#f5f5f5' },
+//   container: { flex: 1, backgroundColor: '#F8FAFC' },
 //   scrollContent: { padding: 20 },
-//   headerTitle: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#075E54' },
-//   label: { textAlign: 'right', fontWeight: 'bold', marginBottom: 5 },
-  
-//   searchSection: { zIndex: 100, marginBottom: 20 }, // zIndex חשוב כדי שהרשימה תצוף מעל הכל
-//   searchInput: { backgroundColor: '#fff', padding: 12, borderRadius: 10, textAlign: 'right', borderWidth: 1, borderColor: '#ddd' },
-  
-//   autocompleteDropdown: {
-//     backgroundColor: '#fff',
-//     borderRadius: 10,
-//     marginTop: 5,
-//     elevation: 5,
-//     borderWidth: 1,
-//     borderColor: '#eee',
-//     position: 'absolute', // גורם לזה "לקפוץ" מעל שאר המסך
-//     top: 70,
-//     left: 0,
-//     right: 0,
-//     zIndex: 1000
-//   },
-//   dropdownItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row', justifyContent: 'space-between' },
-//   dropdownText: { fontSize: 16, fontWeight: '500' },
-//   addPlus: { color: '#075E54', fontWeight: 'bold', fontSize: 18 },
-
-//   selectedSection: { marginBottom: 20 },
-//   sectionTitle: { textAlign: 'right', fontSize: 16, fontWeight: 'bold', marginBottom: 10, color: '#D32F2F' },
-//   memberCard: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 10, elevation: 2 },
-//   memberHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-//   memberName: { fontSize: 16, fontWeight: 'bold' },
-//   removeBtn: { color: '#ff4444', fontSize: 12 },
-//   personalMsgInput: { textAlign: 'right', color: '#075E54', fontSize: 14, paddingTop: 10 },
-
-//   messageTypeCard: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 20 },
-//   toggleRow: { flexDirection: 'row-reverse', marginBottom: 15 },
-//   toggleBtn: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#eee', borderRadius: 8, marginLeft: 5 },
-//   activeToggle: { backgroundColor: '#075E54' },
-//   activeText: { color: '#fff', fontWeight: 'bold' },
-//   uniformInput: { textAlign: 'right', borderTopWidth: 1, borderColor: '#eee', paddingTop: 15 },
-//   emptyText: { textAlign: 'center', color: '#999', marginTop: 10 }
+//   headerTitle: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: '#1A202C', marginBottom: 20 },
+//   mediaCard: { height: 160, backgroundColor: '#EDF2F7', borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#CBD5E0', borderStyle: 'dashed', marginBottom: 20 },
+//   mediaCardActive: { borderStyle: 'solid', borderColor: '#667EEA', backgroundColor: '#fff' },
+//   fullImage: { width: '100%', height: '100%', borderRadius: 22 },
+//   uploadPlaceholder: { alignItems: 'center' },
+//   plusCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+//   plusText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+//   uploadText: { color: '#4A5568', fontWeight: '600', fontSize: 14 },
+//   fileInfo: { alignItems: 'center', padding: 10 },
+//   fileEmoji: { fontSize: 40, marginBottom: 5 },
+//   fileName: { fontSize: 14, color: '#2D3748', fontWeight: 'bold' },
+//   inputContainer: { marginBottom: 20 },
+//   inputLabel: { fontSize: 15, fontWeight: 'bold', color: '#4A5568', marginBottom: 8, textAlign: 'right' },
+//   captionInput: { backgroundColor: '#fff', padding: 15, borderRadius: 16, fontSize: 16, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', color: '#2D3748' },
+//   cryptoBox: { backgroundColor: '#fff', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5, marginBottom: 20 },
+//   cryptoHeader: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 15 },
+//   cryptoEmoji: { fontSize: 22, marginLeft: 8 },
+//   cryptoTitle: { fontSize: 18, fontWeight: 'bold', color: '#2D3748' },
+//   modeGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+//   modeCard: { flex: 0.48, padding: 15, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+//   groupCard: { backgroundColor: '#EBF8FF' },
+//   individualCard: { backgroundColor: '#F0FFF4' },
+//   cardEmoji: { fontSize: 28, marginBottom: 5 },
+//   cardText: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
+//   selectionArea: { marginTop: 10 },
+//   selectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+//   backBtnText: { color: '#E53E3E', fontWeight: 'bold' },
+//   backBtn: { backgroundColor: '#FFF5F5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FEB2B2' },
+//   searchTitle: { fontSize: 14, fontWeight: 'bold', color: '#4A5558' },
+//   searchBar: { backgroundColor: '#F7FAFC', padding: 12, borderRadius: 12, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 10 },
+//   memberList: { maxHeight: 150 },
+//   userRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 12, backgroundColor: '#F8FAFC', borderRadius: 12, marginBottom: 6, alignItems: 'center' },
+//   userRowText: { fontSize: 15, fontWeight: '500' },
+//   addCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center' },
+//   addPlus: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+//   editorContainer: { backgroundColor: '#F7FAFC', padding: 15, borderRadius: 18, borderWidth: 1, borderColor: '#667EEA' },
+//   editorLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 10 },
+//   secretInput: { backgroundColor: '#fff', padding: 12, borderRadius: 12, textAlign: 'right', minHeight: 80, fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+//   editorActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+//   saveBtn: { backgroundColor: '#667EEA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
+//   saveBtnText: { color: '#fff', fontWeight: 'bold' },
+//   cancelBtn: { padding: 10 },
+//   cancelBtnText: { color: '#718096' },
+//   summarySection: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#EDF2F7', paddingTop: 15 },
+//   summaryHeading: { fontSize: 14, fontWeight: 'bold', color: '#4A5568', marginBottom: 10, textAlign: 'right' },
+//   badgeContainer: { flexDirection: 'row-reverse', flexWrap: 'wrap' },
+//   badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDF2F7', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, marginLeft: 8, marginBottom: 8 },
+//   badgeName: { fontSize: 13, fontWeight: '600', color: '#2D3748' },
+//   deleteBadge: { marginRight: 6, backgroundColor: '#CBD5E0', width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
+//   deleteBadgeText: { fontSize: 10, color: '#fff', fontWeight: 'bold' },
+//   mainButton: { backgroundColor: '#667EEA', padding: 18, borderRadius: 20, alignItems: 'center', marginTop: 10, marginBottom: 30, shadowColor: '#667EEA', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+//   mainButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+//   btnDisabled: { backgroundColor: '#A0AEC0', shadowOpacity: 0 }
 // });
 
 // export default CreatePostScreen;
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  ScrollView, Alert, ActivityIndicator, Image 
+  ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { BASE_URL } from '../api/Constants';
 
 const CreatePostScreen = ({ route, navigation }: any) => {
-  const { target, groupId, groupName, userName } = route.params || {};
+  const { target, groupId, userName } = route.params || {};
 
-  // State כללי
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<any>(null);
 
-  // State לניהול חברים ומסרים
-  const [allMembers, setAllMembers] = useState<string[]>([]); 
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredResults, setFilteredResults] = useState<string[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [isUniform, setIsUniform] = useState(true);
-  const [uniformMessage, setUniformMessage] = useState('');
-  const [individualMessages, setIndividualMessages] = useState<{[key: string]: string}>({});
+  
+  const [sendMode, setSendMode] = useState<'individual' | 'group' | null>(null);
+  const [activeRecipient, setActiveRecipient] = useState<any>(null); 
+  const [currentSecretMessage, setCurrentSecretMessage] = useState('');
+  const [selectedRecipients, setSelectedRecipients] = useState<{ [key: string]: string }>({});
 
-  // 1. שליפת חברי הקבוצה מהשרת
   useEffect(() => {
-    if (target === 'group') {
-      fetch(`${BASE_URL}/api/groups/${groupId}/members`)
+    if (target === 'group' && groupId) {
+      fetch(`${BASE_URL}/groups/${groupId}/members`)
         .then(res => res.json())
         .then(data => {
-          const others = data.filter((m: string) => m !== userName);
-          setAllMembers(others);
+          setGroupMembers(data);
+          setFilteredMembers(data);
         })
-        .catch(() => setAllMembers(["בדיקה: אבי", "בדיקה: מיכל", "בדיקה: דני"])); // גיבוי לטסטים
+        .catch(err => console.error(err));
     }
-  }, []);
+  }, [groupId]);
 
-  // 2. לוגיקת חיפוש (Autocomplete)
-  const handleSearch = (text: string) => {
+  const updateFilteredList = (text: string, currentSelected: any) => {
+    const remaining = groupMembers.filter(m => !currentSelected[m.username]);
+    const filtered = remaining.filter(m => 
+      m.username?.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredMembers(filtered);
+  };
+
+  const handleUserSearch = (text: string) => {
     setSearchQuery(text);
-    if (text.length >= 2) {
-      const filtered = allMembers.filter(m => 
-        m.includes(text) && !selectedMembers.includes(m)
-      );
-      setFilteredResults(filtered);
+    updateFilteredList(text, selectedRecipients);
+  };
+
+  const saveMessageToRecipient = () => {
+    if (!currentSecretMessage.trim()) return Alert.alert("חסר מסר", "כתוב משהו סודי...");
+    
+    const newSelected = { ...selectedRecipients };
+    
+    if (sendMode === 'group') {
+      groupMembers.forEach(m => {
+        newSelected[m.username] = currentSecretMessage;
+      });
+      setSendMode(null);
     } else {
-      setFilteredResults([]);
+      newSelected[activeRecipient.username] = currentSecretMessage;
+      setActiveRecipient(null);
+      setSearchQuery('');
     }
+
+    setSelectedRecipients(newSelected);
+    setCurrentSecretMessage('');
+    updateFilteredList('', newSelected);
   };
 
-  const selectMember = (name: string) => {
-    setSelectedMembers([...selectedMembers, name]);
-    setSearchQuery('');
-    setFilteredResults([]);
-  };
-
-  // 3. בחירת קובץ
   const pickFile = async () => {
     try {
-      const results = await DocumentPicker.pick({
-        type: [DocumentPicker.types.images, DocumentPicker.types.video, DocumentPicker.types.pdf],
+      const res = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles], 
       });
-      setFile(results[0]);
-     } catch (err: any) {
-  // בדיקה אם המשתמש פשוט סגר את החלונית בלי לבחור
-  if (err?.code === 'DOCUMENT_PICKER_CANCELED' || err?.message?.includes('cancel')) {
-    console.log('User cancelled the picker');
-  } else {
-    Alert.alert("שגיאה", "בחירת קובץ נכשלה");
-  }
-}
+      setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
+    } catch (e) {
+      console.log("User cancelled picker");
+    }
   };
 
-  // 4. פרסום לשרת
   const handlePublish = async () => {
-    if (!file) return Alert.alert("שגיאה", "אנא בחר קובץ");
-    if (selectedMembers.length === 0) return Alert.alert("שגיאה", "בחר לפחות חבר אחד למסר סודי");
-
+    if (!file) return Alert.alert("עצור!", "חובה לבחור קובץ לפני הפרסום");
     setLoading(true);
-    const finalMessages: {[key: string]: string} = {};
-    selectedMembers.forEach(m => {
-      finalMessages[m] = isUniform ? uniformMessage : (individualMessages[m] || "");
-    });
-
     const formData = new FormData();
-    formData.append('file', { uri: file.uri, type: file.type, name: file.name } as any);
+    formData.append('file', { uri: file.uri, type: file.type || 'application/octet-stream', name: file.name || 'file' } as any);
     formData.append('description', description);
     formData.append('senderUsername', userName);
     formData.append('target', target === 'group' ? groupId : 'world');
-    formData.append('userMessagesJson', JSON.stringify(finalMessages));
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/posts/create`, { method: 'POST', body: formData });
-      if (res.ok) {
-        Alert.alert("הצלחה", "הפוסט פורסם!");
-        navigation.goBack();
-      }
-    } catch (e) {
-      Alert.alert("שגיאה", "החיבור לשרת נכשל");
-    } finally {
-      setLoading(false);
+    if (Object.keys(selectedRecipients).length > 0) {
+      formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
     }
+    try {
+      const res = await fetch(`${BASE_URL}/posts/create`, { method: 'POST', body: formData });
+      if (res.ok) navigation.goBack();
+      else Alert.alert("שגיאה בפרסום");
+    } catch (e) { Alert.alert("שגיאת חיבור"); } finally { setLoading(false); }
   };
+
+  const isImage = file?.type?.startsWith('image/');
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        
-        <Text style={styles.headerTitle}>פרסום ב-{groupName || 'פיד'}</Text>
-
-        {/* בחירת קובץ */}
-        <TouchableOpacity style={styles.fileBox} onPress={pickFile}>
-          {file && file.type?.includes('image') ? (
-            <Image source={{ uri: file.uri }} style={styles.preview} />
-          ) : (
-            <Text style={styles.fileText}>{file ? `✅ ${file.name}` : "📁 בחר תמונה / וידאו / PDF"}</Text>
-          )}
-        </TouchableOpacity>
-
-        <TextInput 
-          style={styles.input} 
-          placeholder="תיאור גלוי לכולם..." 
-          onChangeText={setDescription}
-          multiline
-        />
-
-        <View style={styles.divider} />
-
-        {/* הגדרת מסר סודי */}
-        <View style={styles.secretCard}>
-          <Text style={styles.sectionTitle}>🤐 מסרים סודיים</Text>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-          <View style={styles.toggleRow}>
-            <TouchableOpacity style={[styles.tab, isUniform && styles.activeTab]} onPress={() => setIsUniform(true)}>
-              <Text style={isUniform ? styles.activeTabText : {}}>אחיד</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.tab, !isUniform && styles.activeTab]} onPress={() => setIsUniform(false)}>
-              <Text style={!isUniform ? styles.activeTabText : {}}>אישי</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.headerTitle}>יצירת פוסט חכם ✨</Text>
 
-          {isUniform && (
-            <TextInput 
-              style={[styles.input, styles.uniformInput]} 
-              placeholder="מסר סודי לכל הנבחרים..." 
-              onChangeText={setUniformMessage}
-            />
-          )}
-
-          {/* חיפוש חבר */}
-          <View style={styles.searchWrapper}>
-            <TextInput 
-              style={styles.searchInput} 
-              placeholder="🔍 חפש חבר (2 אותיות...)" 
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-            {filteredResults.length > 0 && (
-              <View style={styles.dropdown}>
-                {filteredResults.map(name => (
-                  <TouchableOpacity key={name} style={styles.dropItem} onPress={() => selectMember(name)}>
-                    <Text>{name}</Text>
-                    <Text style={{color: 'green'}}>+</Text>
-                  </TouchableOpacity>
-                ))}
+          <TouchableOpacity style={[styles.mediaCard, file && styles.mediaCardActive]} onPress={pickFile}>
+            {file ? (
+              isImage ? (
+                <Image source={{ uri: file.uri }} style={styles.fullImage} />
+              ) : (
+                <View style={styles.fileInfo}>
+                  <Text style={styles.fileEmoji}>📄</Text>
+                  <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+                </View>
+              )
+            ) : (
+              <View style={styles.uploadPlaceholder}>
+                <View style={styles.plusCircle}><Text style={styles.plusText}>+</Text></View>
+                <Text style={styles.uploadText}>לחץ לבחירת כל סוג קובץ</Text>
               </View>
             )}
+          </TouchableOpacity>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>מה בראש שלך? ✍️</Text>
+            <TextInput 
+              style={styles.captionInput} 
+              placeholder="כתוב תיאור גלוי לכולם..." 
+              multiline 
+              onChangeText={setDescription} 
+              placeholderTextColor="#A0AEC0"
+            />
           </View>
 
-          {/* רשימת נבחרים */}
-          {selectedMembers.map(member => (
-            <View key={member} style={styles.selectedMember}>
-              <View style={styles.memberHeader}>
-                <Text style={styles.memberName}>{member}</Text>
-                <TouchableOpacity onPress={() => setSelectedMembers(prev => prev.filter(m => m !== member))}>
-                  <Text style={{color: 'red'}}>✕</Text>
-                </TouchableOpacity>
+          {target === 'group' && (
+            <View style={styles.cryptoBox}>
+              <View style={styles.cryptoHeader}>
+                <Text style={styles.cryptoEmoji}>🔐</Text>
+                <Text style={styles.cryptoTitle}>הצפנה לפי נמענים</Text>
               </View>
-              {!isUniform && (
-                <TextInput 
-                  style={styles.personalInput}
-                  placeholder={`מסר אישי ל${member}...`}
-                  onChangeText={txt => setIndividualMessages({...individualMessages, [member]: txt})}
-                />
+              
+              {!sendMode && (
+                <View style={styles.modeGrid}>
+                  <TouchableOpacity style={[styles.modeCard, styles.groupCard]} onPress={() => setSendMode('group')}>
+                    <Text style={styles.cardEmoji}>📣</Text>
+                    <Text style={styles.cardText}>כל הקבוצה</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.modeCard, styles.individualCard]} onPress={() => {
+                    setSendMode('individual');
+                    updateFilteredList('', selectedRecipients);
+                  }}>
+                    <Text style={styles.cardEmoji}>🎯</Text>
+                    <Text style={styles.cardText}>בחירת חברים</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {sendMode === 'individual' && !activeRecipient && (
+                <View style={styles.selectionArea}>
+                  <View style={styles.selectionHeader}>
+                    <TouchableOpacity onPress={() => setSendMode(null)} style={styles.backBtn}>
+                      <Text style={styles.backBtnText}>✕ סגור</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.searchTitle}>מי יראה את המסר?</Text>
+                  </View>
+                  <TextInput style={styles.searchBar} placeholder="חפש חבר ברשימה..." onChangeText={handleUserSearch} value={searchQuery} />
+                  <ScrollView style={styles.memberList} nestedScrollEnabled>
+                    {filteredMembers.map(m => (
+                      <TouchableOpacity key={m.username} style={styles.userRow} onPress={() => setActiveRecipient(m)}>
+                        <Text style={styles.userRowText}>👤 {m.username}</Text>
+                        <View style={styles.addCircle}><Text style={styles.addPlus}>+</Text></View>
+                      </TouchableOpacity>
+                    ))}
+                    {/* הודעה כאשר כל חברי הקבוצה נבחרו */}
+                    {filteredMembers.length === 0 && groupMembers.length > 0 && (
+                      <View style={styles.allSelectedBox}>
+                        <Text style={styles.allSelectedText}>כל חברי הקבוצה נבחרו! ✅</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
+
+              {(activeRecipient || sendMode === 'group') && (
+                <View style={styles.editorContainer}>
+                  <Text style={styles.editorLabel}>
+                    {sendMode === 'group' ? "📝 מסר סודי עבור כל הקבוצה:" : `🔐 מסר סודי עבור: ${activeRecipient?.username}`}
+                  </Text>
+                  <TextInput 
+                    style={styles.secretInput} 
+                    placeholder="הקלד כאן את המסר שיוצפן..." 
+                    multiline 
+                    value={currentSecretMessage} 
+                    onChangeText={setCurrentSecretMessage} 
+                    autoFocus 
+                  />
+                  <View style={styles.editorActions}>
+                    <TouchableOpacity style={styles.saveBtn} onPress={saveMessageToRecipient}>
+                      <Text style={styles.saveBtnText}>{sendMode === 'group' ? "הצפן לכולם 🔐" : "שמור ✅"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.cancelBtnRed} onPress={() => { setActiveRecipient(null); if(sendMode === 'group') setSendMode(null); }}>
+                      <Text style={styles.cancelBtnTextRed}>ביטול ✖</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {/* תצוגת רשימה סופית - שורה מתחת שורה */}
+              {Object.keys(selectedRecipients).length > 0 && (
+                <View style={styles.finalListContainer}>
+                  <Text style={styles.finalListHeading}>נמענים ומסרים שהוצפנו:</Text>
+                  {Object.entries(selectedRecipients).map(([name, msg]) => (
+                    <View key={name} style={styles.finalUserRow}>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          const n = {...selectedRecipients}; delete n[name];
+                          setSelectedRecipients(n);
+                          updateFilteredList(searchQuery, n);
+                        }} 
+                        style={styles.removeUserBtn}
+                      >
+                        <Text style={styles.removeUserIcon}>🗑️</Text>
+                      </TouchableOpacity>
+                      
+                      <View style={styles.finalUserInfo}>
+                        <Text style={styles.finalUserName}>@{name}</Text>
+                        <Text style={styles.finalUserMsg} numberOfLines={1}>{msg}</Text>
+                      </View>
+                      
+                      <View style={styles.statusIndicator} />
+                    </View>
+                  ))}
+                </View>
               )}
             </View>
-          ))}
-        </View>
+          )}
 
-        <TouchableOpacity style={styles.publishBtn} onPress={handlePublish} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.publishBtnText}>פרסם פוסט 🚀</Text>}
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.mainButton, loading && styles.btnDisabled]} onPress={handlePublish} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : (
+              <Text style={styles.mainButtonText}>שלח פוסט לעולם 🚀</Text>
+            )}
+          </TouchableOpacity>
 
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F2F5' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   scrollContent: { padding: 20 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#075E54' },
-  fileBox: { height: 150, backgroundColor: '#fff', borderStyle: 'dashed', borderWidth: 2, borderColor: '#075E54', borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 15, overflow: 'hidden' },
-  preview: { width: '100%', height: '100%' },
-  fileText: { color: '#075E54', fontWeight: 'bold' },
-  input: { backgroundColor: '#fff', padding: 12, borderRadius: 10, textAlign: 'right', marginBottom: 10, borderWidth: 1, borderColor: '#ddd' },
-  divider: { height: 1, backgroundColor: '#ccc', marginVertical: 15 },
-  secretCard: { backgroundColor: '#fff', padding: 15, borderRadius: 15, elevation: 3, zIndex: 1000 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#D32F2F', textAlign: 'right', marginBottom: 10 },
-  toggleRow: { flexDirection: 'row-reverse', marginBottom: 15, backgroundColor: '#eee', borderRadius: 10, padding: 5 },
-  tab: { flex: 1, padding: 10, alignItems: 'center', borderRadius: 8 },
-  activeTab: { backgroundColor: '#D32F2F' },
-  activeTabText: { color: '#fff', fontWeight: 'bold' },
-  uniformInput: { borderColor: '#D32F2F', borderRightWidth: 5 },
-  searchWrapper: { zIndex: 2000, position: 'relative' },
-  searchInput: { borderBottomWidth: 1, borderColor: '#075E54', padding: 10, textAlign: 'right' },
-  dropdown: { position: 'absolute', top: 50, left: 0, right: 0, backgroundColor: '#fff', elevation: 5, borderRadius: 10, borderColor: '#eee', zIndex: 3000 },
-  dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row-reverse', justifyContent: 'space-between' },
-  selectedMember: { backgroundColor: '#F9F9F9', padding: 10, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: '#eee' },
-  memberHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
-  memberName: { fontWeight: 'bold' },
-  personalInput: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10, paddingTop: 5, textAlign: 'right', color: '#075E54' },
-  publishBtn: { backgroundColor: '#075E54', padding: 18, borderRadius: 30, alignItems: 'center', marginTop: 30 },
-  publishBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+  headerTitle: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: '#1A202C', marginBottom: 20 },
+  mediaCard: { height: 160, backgroundColor: '#EDF2F7', borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#CBD5E0', borderStyle: 'dashed', marginBottom: 20 },
+  mediaCardActive: { borderStyle: 'solid', borderColor: '#667EEA', backgroundColor: '#fff' },
+  fullImage: { width: '100%', height: '100%', borderRadius: 22 },
+  uploadPlaceholder: { alignItems: 'center' },
+  plusCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  plusText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  uploadText: { color: '#4A5568', fontWeight: '600', fontSize: 14 },
+  fileInfo: { alignItems: 'center', padding: 10 },
+  fileEmoji: { fontSize: 40, marginBottom: 5 },
+  fileName: { fontSize: 14, color: '#2D3748', fontWeight: 'bold' },
+  inputContainer: { marginBottom: 20 },
+  inputLabel: { fontSize: 15, fontWeight: 'bold', color: '#4A5568', marginBottom: 8, textAlign: 'right' },
+  captionInput: { backgroundColor: '#fff', padding: 15, borderRadius: 16, fontSize: 16, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', color: '#2D3748' },
+  cryptoBox: { backgroundColor: '#fff', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5, marginBottom: 20 },
+  cryptoHeader: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 15 },
+  cryptoEmoji: { fontSize: 22, marginLeft: 8 },
+  cryptoTitle: { fontSize: 18, fontWeight: 'bold', color: '#2D3748' },
+  modeGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  modeCard: { flex: 0.48, padding: 15, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  groupCard: { backgroundColor: '#EBF8FF' },
+  individualCard: { backgroundColor: '#F0FFF4' },
+  cardEmoji: { fontSize: 28, marginBottom: 5 },
+  cardText: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
+  selectionArea: { marginTop: 10 },
+  selectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  backBtnText: { color: '#E53E3E', fontWeight: 'bold' },
+  backBtn: { backgroundColor: '#FFF5F5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FEB2B2' },
+  searchTitle: { fontSize: 14, fontWeight: 'bold', color: '#4A5568' },
+  searchBar: { backgroundColor: '#F7FAFC', padding: 12, borderRadius: 12, textAlign: 'right', borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 10 },
+  memberList: { maxHeight: 150 },
+  userRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 12, backgroundColor: '#F8FAFC', borderRadius: 12, marginBottom: 6, alignItems: 'center' },
+  userRowText: { fontSize: 15, fontWeight: '500' },
+  addCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center' },
+  addPlus: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  
+  allSelectedBox: { padding: 20, alignItems: 'center' },
+  allSelectedText: { color: '#38A169', fontWeight: 'bold', fontSize: 15 },
+
+  editorContainer: { backgroundColor: '#F7FAFC', padding: 15, borderRadius: 18, borderWidth: 1, borderColor: '#667EEA' },
+  editorLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 10, color: '#2D3748' },
+  secretInput: { backgroundColor: '#fff', padding: 12, borderRadius: 12, textAlign: 'right', minHeight: 80, fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  editorActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  saveBtn: { backgroundColor: '#667EEA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
+  saveBtnText: { color: '#fff', fontWeight: 'bold' },
+  
+  cancelBtnRed: { padding: 10, backgroundColor: '#FFF5F5', borderRadius: 10, borderWidth: 1, borderColor: '#FEB2B2' },
+  cancelBtnTextRed: { color: '#C53030', fontWeight: 'bold' },
+
+  // רשימה סופית מעוצבת
+  finalListContainer: { marginTop: 25, borderTopWidth: 1, borderTopColor: '#EDF2F7', paddingTop: 15 },
+  finalListHeading: { fontSize: 14, fontWeight: 'bold', color: '#4A5568', marginBottom: 12, textAlign: 'right' },
+  finalUserRow: { 
+    flexDirection: 'row-reverse', 
+    alignItems: 'center', 
+    backgroundColor: '#fff', 
+    padding: 12, 
+    borderRadius: 16, 
+    marginBottom: 8, 
+    borderWidth: 1, 
+    borderColor: '#E2E8F0' 
+  },
+  removeUserBtn: { padding: 8, backgroundColor: '#FFF5F5', borderRadius: 10, marginLeft: 12 },
+  removeUserIcon: { fontSize: 14 },
+  finalUserInfo: { flex: 1, alignItems: 'flex-end' },
+  finalUserName: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
+  finalUserMsg: { fontSize: 12, color: '#718096', marginTop: 2 },
+  statusIndicator: { width: 4, height: 25, backgroundColor: '#667EEA', borderRadius: 2, marginRight: 10 },
+
+  mainButton: { backgroundColor: '#667EEA', padding: 18, borderRadius: 20, alignItems: 'center', marginTop: 10, marginBottom: 30, shadowColor: '#667EEA', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  mainButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  btnDisabled: { backgroundColor: '#A0AEC0', shadowOpacity: 0 }
 });
 
 export default CreatePostScreen;

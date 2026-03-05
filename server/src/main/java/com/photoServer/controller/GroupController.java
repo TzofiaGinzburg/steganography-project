@@ -1,5 +1,7 @@
 package com.photoServer.controller;
-
+// וודא שיש לך את ה-Import הזה בראש הקובץ!
+import java.util.Optional;
+import java.util.List;
 import com.photoServer.model.Group;
 import com.photoServer.model.GroupRequest;
 import com.photoServer.model.Invitation;
@@ -11,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -104,5 +105,31 @@ public class GroupController {
         List<Group> groups = groupRepository.findByMemberUsername(username);
         return ResponseEntity.ok(groups);
     }
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<List<Group.Member>> getGroupMembers(@PathVariable String groupId) {
+        // מציאת הקבוצה לפי ה-ID
+        java.util.Optional<Group> groupOpt = groupRepository.findById(groupId);
 
+        // בדיקה אם הקבוצה קיימת
+        if (groupOpt.isPresent()) {
+            List<Group.Member> members = groupOpt.get().getMembers();
+            return ResponseEntity.ok(members);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateGroup(@PathVariable("id") String id, @RequestBody Group groupData) {
+        String cleanId = id.trim().replaceAll("[^a-zA-Z0-9]", ""); // הגנה נוספת בשרת
+        System.out.println("SERVER: Processing update for ID: [" + cleanId + "]");
+
+        return groupRepository.findById(cleanId).map(group -> {
+            group.setName(groupData.getName());
+            group.setMembers(groupData.getMembers());
+            group.setCreator(groupData.getCreator());
+            groupRepository.save(group);
+            return ResponseEntity.ok(group);
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }
