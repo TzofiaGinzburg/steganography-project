@@ -1724,7 +1724,19 @@ const CreatePostScreen = ({ route, navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+      
+      {/* --- HEADER FIX: כפתור חזור קבוע למעלה --- */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+      </View>
+
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={{flex: 1}}
+      >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <Text style={styles.headerTitle}>יצירת פוסט חכם ✨</Text>
@@ -1797,7 +1809,6 @@ const CreatePostScreen = ({ route, navigation }: any) => {
                         <View style={styles.addCircle}><Text style={styles.addPlus}>+</Text></View>
                       </TouchableOpacity>
                     ))}
-                    {/* הודעה כאשר כל חברי הקבוצה נבחרו */}
                     {filteredMembers.length === 0 && groupMembers.length > 0 && (
                       <View style={styles.allSelectedBox}>
                         <Text style={styles.allSelectedText}>כל חברי הקבוצה נבחרו! ✅</Text>
@@ -1831,7 +1842,6 @@ const CreatePostScreen = ({ route, navigation }: any) => {
                 </View>
               )}
 
-              {/* תצוגת רשימה סופית - שורה מתחת שורה */}
               {Object.keys(selectedRecipients).length > 0 && (
                 <View style={styles.finalListContainer}>
                   <Text style={styles.finalListHeading}>נמענים ומסרים שהוצפנו:</Text>
@@ -1875,6 +1885,27 @@ const CreatePostScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    zIndex: 1000,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF2F7',
+  },
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: '#EDF2F7',
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: '#4A5568',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   scrollContent: { padding: 20 },
   headerTitle: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: '#1A202C', marginBottom: 20 },
   mediaCard: { height: 160, backgroundColor: '#EDF2F7', borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#CBD5E0', borderStyle: 'dashed', marginBottom: 20 },
@@ -1911,43 +1942,28 @@ const styles = StyleSheet.create({
   userRowText: { fontSize: 15, fontWeight: '500' },
   addCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#667EEA', justifyContent: 'center', alignItems: 'center' },
   addPlus: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  
   allSelectedBox: { padding: 20, alignItems: 'center' },
   allSelectedText: { color: '#38A169', fontWeight: 'bold', fontSize: 15 },
-
   editorContainer: { backgroundColor: '#F7FAFC', padding: 15, borderRadius: 18, borderWidth: 1, borderColor: '#667EEA' },
   editorLabel: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 10, color: '#2D3748' },
   secretInput: { backgroundColor: '#fff', padding: 12, borderRadius: 12, textAlign: 'right', minHeight: 80, fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
   editorActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   saveBtn: { backgroundColor: '#667EEA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
   saveBtnText: { color: '#fff', fontWeight: 'bold' },
-  
   cancelBtnRed: { padding: 10, backgroundColor: '#FFF5F5', borderRadius: 10, borderWidth: 1, borderColor: '#FEB2B2' },
   cancelBtnTextRed: { color: '#C53030', fontWeight: 'bold' },
-
-  // רשימה סופית מעוצבת
   finalListContainer: { marginTop: 25, borderTopWidth: 1, borderTopColor: '#EDF2F7', paddingTop: 15 },
   finalListHeading: { fontSize: 14, fontWeight: 'bold', color: '#4A5568', marginBottom: 12, textAlign: 'right' },
-  finalUserRow: { 
-    flexDirection: 'row-reverse', 
-    alignItems: 'center', 
-    backgroundColor: '#fff', 
-    padding: 12, 
-    borderRadius: 16, 
-    marginBottom: 8, 
-    borderWidth: 1, 
-    borderColor: '#E2E8F0' 
-  },
+  finalUserRow: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', padding: 12, borderRadius: 16, marginBottom: 8, borderWidth: 1, borderColor: '#E2E8F0' },
   removeUserBtn: { padding: 8, backgroundColor: '#FFF5F5', borderRadius: 10, marginLeft: 12 },
   removeUserIcon: { fontSize: 14 },
   finalUserInfo: { flex: 1, alignItems: 'flex-end' },
   finalUserName: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
   finalUserMsg: { fontSize: 12, color: '#718096', marginTop: 2 },
   statusIndicator: { width: 4, height: 25, backgroundColor: '#667EEA', borderRadius: 2, marginRight: 10 },
-
-  mainButton: { backgroundColor: '#667EEA', padding: 18, borderRadius: 20, alignItems: 'center', marginTop: 10, marginBottom: 30, shadowColor: '#667EEA', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  mainButton: { backgroundColor: '#667EEA', padding: 18, borderRadius: 20, alignItems: 'center', marginTop: 10, marginBottom: 30, elevation: 5 },
   mainButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  btnDisabled: { backgroundColor: '#A0AEC0', shadowOpacity: 0 }
+  btnDisabled: { backgroundColor: '#A0AEC0' }
 });
 
 export default CreatePostScreen;

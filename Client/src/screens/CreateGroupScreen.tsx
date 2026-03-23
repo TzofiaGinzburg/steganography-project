@@ -1,56 +1,3 @@
-// // // // import React, { useState, useEffect } from 'react';
-// // // // import { 
-// // // //   View, Text, TextInput, FlatList, TouchableOpacity, 
-// // // //   StyleSheet, Switch, Alert, ActivityIndicator 
-// // // // } from 'react-native';
-// // // // import { BASE_URL } from '../api/Constants';
-// // // // const CreateGroupScreen = ({ navigation, route }: any) => {
-// // // //   // 1. חילוץ השם האמיתי וה-Username מה-params שנשלחו מה-Login/Main
-// // // //   const { userName, realName } = route.params || { userName: 'user_unknown', realName: 'משתמש כללי' };
-
-// // // //   const [groupName, setGroupName] = useState('');
-// // // //   const [searchQuery, setSearchQuery] = useState('');
-// // // //   const [suggestions, setSuggestions] = useState<any[]>([]);
-// // // //   const [loading, setLoading] = useState(false);
-
-// // // //   // 2. עדכון הרשימה ההתחלתית - את נכנסת עם ה-fullName שלך
-// // // //   const [selectedMembers, setSelectedMembers] = useState<any[]>([
-// // // //     { 
-// // // //       username: userName, 
-// // // //       fullName: realName, // השם האמיתי נשמר כאן בזיכרון
-// // // //       isAdmin: true, 
-// // // //       isCreator: true, 
-// // // //       status: 'חבר' 
-// // // //     }
-// // // //   ]);
-
-// // // //   // ה-IP שציינת בקוד שלך
-// // // //   const MY_IP = "192.168.1.112"; 
-
-// // // //  // חיפוש חברים וזיהוי אוטומטי בסיום הקלדה
-// // // //   useEffect(() => {
-// // // //     const delayDebounceFn = setTimeout(async () => {
-// // // //       // מחפשים רק אם הוקלדו לפחות 2 אותיות
-// // // //       if (searchQuery.length >= 2) {
-// // // //         try {
-// // // //           // שליחת שאילתה לשרת - מחפש בטבלת USERS
-// // // //           const response = await fetch(`${BASE_URL}/users/search?name=${searchQuery}`);
-// // // //           const data = await response.json();
-          
-// // // //           // 1. עדכון רשימת ההצעות (כדי שיוכלו גם ללחוץ ידנית)
-// // // //           const filtered = data.filter((u: any) => 
-// // // //             !selectedMembers.find(m => m.username === u.username)
-// // // //           );
-// // // //           setSuggestions(filtered);
-
-// // // //           // 2. בדיקת זיהוי אוטומטי (מה שביקשת)
-// // // //           // אנחנו בודקים אם מה שרשמת בתיבה תואם בדיוק ל-username של מישהו שחזר מהמסד
-// // // //           const exactMatch = data.find((u: any) => 
-// // // //             u.username.toLowerCase() === searchQuery.trim().toLowerCase()
-// // // //           );
-
-// // // //           // אם נמצאה התאמה מדויקת והוא לא נמצא כבר ברשימה למטה
-// // // //           if (exactMatch && !selectedMembers.find(m => m.username === exactMatch.username)) {
 // // // //             // קריאה לפונקציית addMember הקיימת שלך
 // // // //             // היא כבר תשים אותו בסטטוס 'ממתין' ותקפיץ את ה-Alert
 // // // //             addMember(exactMatch);
@@ -1189,7 +1136,6 @@
 //   buttonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
 // });
 
-// export default CreateGroupScreen;
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, TextInput, FlatList, TouchableOpacity, 
@@ -1224,22 +1170,20 @@ const CreateGroupScreen = ({ navigation, route }: any) => {
       const mapped = initialMembers.map((m: any) => ({
         ...m,
         isCreator: m.username === currentUserName,
-        // isAdmin נשמר מהדאטהבייס
       }));
       setSelectedMembers(mapped);
     } else {
-      // ביצירה חדשה: הגדרת עצמך כמנהל עם isAdmin: true
       setSelectedMembers([
         { 
           username: currentUserName, 
           fullName: currentRealName, 
-          isAdmin: true,   // <--- זה מה שמציג אותך כמנהל (הכתר)
+          isAdmin: true,   
           isCreator: true, 
         }
       ]);
     }
   }, [isEditing, initialMembers]);
-  // לוגיקת חיפוש (נשארה כפי שהייתה)
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length >= 2) {
@@ -1286,38 +1230,33 @@ const CreateGroupScreen = ({ navigation, route }: any) => {
   }
 
   setLoading(true);
-  try {
-    // 1. ניקוי אגרסיבי של ה-ID מכל תו שאינו אות או מספר (מנקה \n, \r, רווחים ונקודות)
-    const cleanId = isEditing && groupId 
-      ? groupId.toString().replace(/[^a-zA-Z0-9]/g, '') 
-      : '';
+
+  try { 
+    const rawId = groupId ? groupId.toString() : '';
+    const cleanId = rawId.replace(/[^a-zA-Z0-9]/g, '');
 
     const url = isEditing 
       ? `${BASE_URL}/groups/update/${cleanId}` 
       : `${BASE_URL}/groups/create`;
 
-    // 2. בניית ה-Payload עם שמות שדות תואמים ל-Java (isAdmin)
     const payload = isEditing ? {
-      name: groupName, 
-      creator: currentUserName,
-      members: selectedMembers.map(m => ({
-        username: m.username,
-        isAdmin: m.isAdmin // <--- חייב להיות isAdmin כדי להתאים ל-Java
-      }))
-    } : {
-      groupName: groupName,
-      creator: currentUserName,
-      invitedMembers: selectedMembers
-        .filter(m => !m.isCreator)
-        .map(m => ({
+        id: cleanId,
+        name: groupName, 
+        creator: currentUserName,
+        members: selectedMembers.map(m => ({
           username: m.username,
-          isAdmin: m.isAdmin
+          isAdmin: !!m.isAdmin 
         }))
+    } : {
+        groupName: groupName, 
+        creator: currentUserName,
+        invitedMembers: selectedMembers
+          .filter(m => !m.isCreator)
+          .map(m => ({
+            username: m.username,
+            isAdmin: !!m.isAdmin
+          }))
     };
-
-    // הדפסות לדיבאג - וודא שה-URL ב-Log יוצא נקי בלי נקודות בסוף
-    console.log("DEBUG: Sending to Clean URL:", url);
-    console.log("DEBUG: Final Payload:", JSON.stringify(payload));
 
     const response = await fetch(url, {
       method: isEditing ? 'PUT' : 'POST',
@@ -1330,19 +1269,28 @@ const CreateGroupScreen = ({ navigation, route }: any) => {
       navigation.navigate('MyGroups', { userName: currentUserName });
     } else {
       const errorText = await response.text();
-      console.error("SERVER ERROR:", errorText);
-      Alert.alert("שגיאה", "השרת החזיר שגיאה. בדוק את ה-Log ב-IntelliJ.");
+      Alert.alert("שגיאת שרת", `סטטוס ${response.status}`);
     }
   } catch (error) {
-    console.error("NETWORK ERROR:", error);
     Alert.alert("שגיאה", "לא ניתן להתחבר לשרת.");
   } finally {
     setLoading(false);
   }
 };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>{isEditing ? 'עריכת קבוצה' : 'יצירת קבוצה חדשה'}</Text>
+      {/* שורת כותרת עם כפתור חזור */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>➜</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{isEditing ? 'עריכת קבוצה' : 'יצירת קבוצה'}</Text>
+        <View style={{ width: 40 }} /> 
+      </View>
       
       <Text style={styles.label}>שם הקבוצה:</Text>
       <TextInput 
@@ -1419,7 +1367,23 @@ const CreateGroupScreen = ({ navigation, route }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff', paddingTop: 50 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 25, color: '#333' },
+  headerRow: { 
+    flexDirection: 'row-reverse', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 25 
+  },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333' },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F1F3F5',
+    borderRadius: 20,
+    transform: [{ scaleX: -1 }] 
+  },
+  backButtonText: { fontSize: 22, color: '#6200EE', fontWeight: 'bold' },
   label: { fontSize: 16, fontWeight: 'bold', textAlign: 'right', marginBottom: 5, color: '#555' },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, textAlign: 'right', marginBottom: 15, backgroundColor: '#fdfdfd' },
   suggestionsContainer: { backgroundColor: '#fff', borderRadius: 10, elevation: 8, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.2, zIndex: 999, marginBottom: 15, borderWidth: 1, borderColor: '#6200EE' },
