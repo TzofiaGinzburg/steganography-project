@@ -22,7 +22,7 @@ public class AudioDsssStrategy extends BaseSteganoStrategy implements SteganoStr
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-DSSS-Robust"; }
+    public String getName() { return "AudioDsssStrategy"; }
 
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }

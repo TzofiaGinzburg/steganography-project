@@ -21,7 +21,7 @@ public class AudioQimStrategy extends BaseSteganoStrategy implements SteganoStra
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-QIM"; }
+    public String getName() { return "AudioQimStrategy"; }
 
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }

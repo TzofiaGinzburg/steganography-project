@@ -13,7 +13,7 @@ public class SteganoRouter {
 
         return switch (metrics.type()) {
             case IMAGE -> routeImage(metrics);
-            case AUDIO -> "LsbAudioStrategy";
+            case AUDIO ->routeAudio(metrics);
             default -> "LsbImage";
         };
     }
@@ -63,5 +63,46 @@ public class SteganoRouter {
         // 4. Patchwork: ברירת מחדל למקרים של עמידות גבוהה
         System.out.println("🧩 [ROUTER] Standard Mode -> Using Patchwork");
         return "PatchworkStrategy";
+    }
+    private String routeAudio(FileMetrics m) {
+        double snr = m.getMetric("snr");
+        double activity = m.getMetric("spectralActivity");
+        double rms = m.getMetric("rms");
+        boolean isCompressed = m.getMetric("isCompressed") > 0;
+
+        // 1. קבצים דחוסים (MP3/AAC)
+        if (isCompressed) {
+            if (snr > 40) return "AudioQimStrategy";
+            return "AudioDsssStrategy";
+        }
+
+        // 2. קבצים לא דחוסים (WAV/FLAC)
+
+        // אות נקי וחזק -> AudioLSBStrategy
+        if (snr > 60 && rms > 0.15) {
+            return "AudioLSBStrategy";
+        }
+
+        // עושר תדרים (תזמורת/מוזיקה מורכבת) -> MagnitudeSpectrumStrategy
+        if (snr >= 35 && snr <= 55 && rms > 0.20 && activity >= 0.10 && activity <= 0.30) {
+            return "MagnitudeSpectrumStrategy";
+        }
+
+        // תדרים יציבים (דיבור/שירה נקייה) -> AudioPhaseStrategy
+        if (snr >= 40 && snr <= 60 && activity < 0.05) {
+            return "AudioPhaseStrategy";
+        }
+
+        // אות רועש או "עמוס" (רוק/פופ) -> AudioEchoStrategy
+        if (snr < 40 && activity > 0.30) {
+            return "AudioEchoStrategy";
+        }
+
+        // טווח ביניים מאוזן -> AudioParityStrategy
+        if (snr > 45 && activity >= 0.05 && activity <= 0.20) {
+            return "AudioParityStrategy";
+        }
+
+        return "AudioParityStrategy"; // Default
     }
 }

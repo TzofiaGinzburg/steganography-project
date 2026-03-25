@@ -21,7 +21,7 @@ public class AudioPhaseStrategy extends BaseSteganoStrategy implements SteganoSt
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-Phase"; }
+    public String getName() { return "AudioPhaseStrategy"; }
     @Override
     public MediaType getSupportedType() {
         return MediaType.AUDIO; // או IMAGE, לפי העניין

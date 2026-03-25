@@ -22,7 +22,7 @@ public class AudioEchoStrategy extends BaseSteganoStrategy implements SteganoStr
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-Echo"; }
+    public String getName() { return "AudioEchoStrategy"; }
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }
 

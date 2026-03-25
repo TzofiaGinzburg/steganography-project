@@ -49,7 +49,7 @@ public class SteganoFullCycleTest {
 
         // --- המשך החילוץ והאימות ---
         System.out.println("\n--- מתחיל תהליך חילוץ לאימות ---");
-        String extractedMessage = steganographyService.extractMessage("3f.png", resultBytes);
+        String extractedMessage = steganographyService.extractMessage("7f.jpg", resultBytes);
 
         System.out.println("\n========================================");
         System.out.println("📤 הודעה שהוחבאה: " + secretMessage);

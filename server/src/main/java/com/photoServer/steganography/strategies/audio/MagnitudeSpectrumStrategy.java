@@ -22,7 +22,7 @@ public class MagnitudeSpectrumStrategy extends BaseSteganoStrategy implements St
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-Spectrum-Final"; }
+    public String getName() { return "MagnitudeSpectrumStrategy"; }
 
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }

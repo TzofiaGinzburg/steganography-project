@@ -47,7 +47,11 @@ public class PostService {
     public List<PostComment> getCommentsByPostId(String postId) {
         return commentRepository.findByPostId(postId);
     }
-
+    // הפונקציה שחסרה לך כדי לאפשר פענוח לפי דרישה
+    public Post getPostById(String postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("שגיאה: פוסט עם מזהה " + postId + " לא נמצא בבסיס הנתונים"));
+    }
     public PostComment saveComment(PostComment comment) {
         return commentRepository.save(comment);
     }

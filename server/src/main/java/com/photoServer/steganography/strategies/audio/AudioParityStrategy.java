@@ -18,7 +18,7 @@ public class AudioParityStrategy  extends BaseSteganoStrategy implements Stegano
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-Parity"; }
+    public String getName() { return "AudioParityStrategy"; }
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }
 

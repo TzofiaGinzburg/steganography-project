@@ -107,4 +107,80 @@ public class QualityGuard {
         }
         return heatmap;
     }
+
+        // ... (PSNR ו-SSIM הקיימים שלך)
+
+        // חישוב אנטרופיה (רמת הפירוט/מידע בתמונה)
+        public static double calculateEntropy(BufferedImage img) {
+            int[] histogram = new int[256];
+            int width = img.getWidth();
+            int height = img.getHeight();
+
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int gray = (new java.awt.Color(img.getRGB(x, y)).getRed()); // הנחה: תמונה בגווני אפור או ערוץ אדום
+                    histogram[gray]++;
+                }
+            }
+
+            double entropy = 0;
+            double totalPixels = width * height;
+            for (int count : histogram) {
+                if (count > 0) {
+                    double p = count / totalPixels;
+                    entropy -= p * (Math.log(p) / Math.log(2));
+                }
+            }
+            return entropy;
+        }
+
+        // חישוב צפיפות קצוות (זיהוי אזורי "רעש" ויזואלי)
+        public static double calculateEdgeDensity(BufferedImage img) {
+            int width = img.getWidth();
+            int height = img.getHeight();
+            int edgeCount = 0;
+            int threshold = 30; // סף לזיהוי קצה
+
+            for (int y = 1; y < height - 1; y++) {
+                for (int x = 1; x < width - 1; x++) {
+                    // Sobel Filter פשוט למציאת גרדיאנט
+                    int p1 = new java.awt.Color(img.getRGB(x+1, y)).getRed();
+                    int p2 = new java.awt.Color(img.getRGB(x-1, y)).getRed();
+                    int p3 = new java.awt.Color(img.getRGB(x, y+1)).getRed();
+                    int p4 = new java.awt.Color(img.getRGB(x, y-1)).getRed();
+
+                    double gradient = Math.sqrt(Math.pow(p1 - p2, 2) + Math.pow(p3 - p4, 2));
+                    if (gradient > threshold) edgeCount++;
+                }
+            }
+            return (double) edgeCount / (width * height) * 100;
+        }
+
+
+
+    /**
+     * חישוב SNR עבור קבצי אודיו (WAV 16-bit).
+     * ככל שהערך גבוה יותר (מעל 30-40dB), השינוי פחות נשמע לאוזן.
+     */
+    public static double calculateAudioSNR(byte[] original, byte[] stego) {
+        if (original.length != stego.length) return 0.0;
+
+        double signalPower = 0;
+        double noisePower = 0;
+        int offset = 44; // דילוג על ה-WAV Header
+
+        for (int i = offset; i < original.length - 1; i += 2) {
+            // הפיכת בייטים ל-Short (16-bit PCM)
+            short s1 = (short) ((original[i] & 0xFF) | (original[i + 1] << 8));
+            short s2 = (short) ((stego[i] & 0xFF) | (stego[i + 1] << 8));
+
+            signalPower += Math.pow(s1, 2);
+            noisePower += Math.pow(s1 - s2, 2);
+        }
+
+        if (noisePower == 0) return 100.0; // קבצים זהים
+
+        // נוסחת SNR בדציבלים
+        return 10 * Math.log10(signalPower / noisePower);
+    }
 }

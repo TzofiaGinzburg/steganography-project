@@ -17,7 +17,7 @@ public class AudioLSBStrategy extends BaseSteganoStrategy implements SteganoStra
     private static final String MARKER = "##END##";
 
     @Override
-    public String getName() { return "Audio-LSB-Dynamic"; }
+    public String getName() { return "AudioLSBStrategy"; }
 
     @Override
     public MediaType getSupportedType() { return MediaType.AUDIO; }
