@@ -29,32 +29,32 @@ public class VideoFileAnalyzer implements MediaAnalyzer {
         Map<String, Double> metrics = new HashMap<>();
 
         try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(new ByteArrayInputStream(data))) {
-            // שינוי לוגיקה 1: שימוש ב-setVideoOption והגדרה אגרסיבית לייצוא וקטורים
             grabber.setVideoOption("flags2", "+export_mvs");
             grabber.start();
 
-            metrics.put("fps", grabber.getFrameRate());
-            metrics.put("width", (double) grabber.getImageWidth());
-            metrics.put("height", (double) grabber.getImageHeight());
-            metrics.put("durationSec", grabber.getLengthInTime() / 1000000.0);
-            metrics.put("bitrate", (double) grabber.getVideoBitrate());
+            double fps = grabber.getFrameRate();
+            int width = grabber.getImageWidth();
+            int height = grabber.getImageHeight();
+            long totalFrames = grabber.getLengthInFrames();
 
-            // שינוי לוגיקה 2: חישוב צפיפות בקריאה רציפה (Sequential)
-            double avgMVCount = calculateMotionVectorDensity(grabber);
-            metrics.put("motionVectorDensity", avgMVCount);
+            metrics.put("fps", fps);
+            metrics.put("bitrateMbps", grabber.getVideoBitrate() / 1_000_000.0);
+            metrics.put("width", (double) width);
+            metrics.put("height", (double) height);
+            // חישוב סך הפיקסלים בוידאו עבור הראוטר (Capacity Ratio)
+            metrics.put("totalPixels", (double) width * height * totalFrames);
 
-            metrics.put("recommendedStrategy", decideStrategy(grabber.getFrameRate(), avgMVCount));
+            // שליפת צפיפות וקטורים והזנה כמדד תנועה
+            double mvDensity = calculateMotionVectorDensity(grabber);
+            metrics.put("motionVariance", mvDensity / 100.0); // נרמול לערכים שהראוטר מכיר (0-5)
 
             grabber.stop();
         } catch (Exception e) {
-            System.err.println("❌ שגיאה בניתוח וידאו: " + e.getMessage());
+            metrics.put("motionVariance", 0.0);
             metrics.put("fps", 24.0);
-            metrics.put("recommendedStrategy", 1.0);
         }
-
         return metrics;
     }
-
     private double calculateMotionVectorDensity(FFmpegFrameGrabber grabber) throws Exception {
         long totalVectors = 0;
         int framesWithVectors = 0;

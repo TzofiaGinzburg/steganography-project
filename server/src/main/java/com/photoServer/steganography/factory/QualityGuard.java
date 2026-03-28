@@ -183,4 +183,47 @@ public class QualityGuard {
         // נוסחת SNR בדציבלים
         return 10 * Math.log10(signalPower / noisePower);
     }
+    public static double calculateZCR(byte[] audioData) {
+        if (audioData == null || audioData.length <= 46) return 0.0;
+
+        int crossings = 0;
+        int offset = 44; // דילוג על WAV Header
+        int sampleCount = 0;
+        short lastSample = 0;
+
+        for (int i = offset; i < audioData.length - 1; i += 2) {
+            // המרה מ-Bytes ל-Short (16-bit PCM)
+            short currentSample = (short) ((audioData[i] & 0xFF) | (audioData[i + 1] << 8));
+
+            if (sampleCount > 0) {
+                // בדיקה אם הסימן השתנה (חציית האפס)
+                // מכפלה של מספר חיובי ושלילי תמיד תהיה קטנה מאפס
+                if ((currentSample > 0 && lastSample < 0) || (currentSample < 0 && lastSample > 0)) {
+                    crossings++;
+                }
+            }
+            lastSample = currentSample;
+            sampleCount++;
+        }
+
+        if (sampleCount == 0) return 0.0;
+
+        // מחזיר את היחס (בין 0 ל-1)
+        return (double) crossings / sampleCount;
+    }
+    // בתוך package com.photoServer.steganography.factory.QualityGuard
+    public static double calculateMotionVariance(java.util.List<BufferedImage> frames) {
+        if (frames.size() < 2) return 0.0;
+
+        double totalDiff = 0;
+        for (int i = 0; i < frames.size() - 1; i++) {
+            // משתמשים ב-MSE הקיים שלנו כבסיס למדידת שינוי בין פריימים עוקבים
+            totalDiff += calculatePSNR(frames.get(i), frames.get(i+1));
+        }
+
+        // PSNR נמוך בין פריימים = שינוי גדול (תנועה רבה)
+        // ננרמל לערך שמתאים לטבלה שלך (0.0 עד 5.0)
+        double avgPsnr = totalDiff / (frames.size() - 1);
+        return Math.max(0, 5.0 - (avgPsnr / 10.0));
+    }
 }

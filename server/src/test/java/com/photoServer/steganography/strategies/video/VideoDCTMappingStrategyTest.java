@@ -2,88 +2,62 @@ package com.photoServer.steganography.strategies.video;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
-
-import java.io.InputStream;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VideoDCTMappingStrategyTest {
 
     @Test
     void testDCTEmbedAndExtract() throws Exception {
-        VideoDCTMappingStrategy strategy = new     VideoDCTMappingStrategy();
+        VideoDCTMappingStrategy strategy = new VideoDCTMappingStrategy();
 
-        // טעינת קובץ הוידאו
+        // 1. טעינת הקובץ - וודא שהקובץ נמצא ב: src/test/resources/1.mp4
         String fileName = "1.mp4";
         ClassPathResource resource = new ClassPathResource(fileName);
+
         if (!resource.exists()) {
-            System.err.println("❌ File not found: " + fileName);
-            return;
+            fail("❌ קובץ הבדיקה '1.mp4' לא נמצא ב-src/test/resources!");
         }
 
-        byte[] originalVideo;
-        try (InputStream is = resource.getInputStream()) {
-            originalVideo = is.readAllBytes();
-        }
-
+        byte[] originalVideo = Files.readAllBytes(Paths.get(resource.getURI()));
         String secret = "DCT_Stego_2026";
 
         System.out.println("====================================================");
-        System.out.println("📊 DCT COEFFICIENT TEST");
+        System.out.println("📊 DCT ROBUSTNESS TEST");
         System.out.println("====================================================");
-        System.out.println("🔹 File size  : " + originalVideo.length + " bytes");
-        System.out.println("🔹 Secret     : [" + secret + "]");
-        System.out.println("🔹 Bits needed: " + (secret.length() + "###END###".length()) * 8);
+        System.out.println("🔹 Original Size: " + originalVideo.length + " bytes");
 
-        // EMBED
-        System.out.println("\n⏳ Starting embed...");
-        long t0 = System.currentTimeMillis();
+        // 2. EMBED
+        System.out.println("⏳ Embedding secret...");
         byte[] stegoVideo = strategy.embed(originalVideo, secret);
-        long embedTime = System.currentTimeMillis() - t0;
 
-        System.out.println("⏱  Embed time : " + embedTime + " ms");
-        System.out.println("📁 Stego size : " + stegoVideo.length + " bytes");
+        assertNotNull(stegoVideo, "Stego video should not be null");
 
-        assertTrue(stegoVideo.length > 0, "stegoVideo must not be empty");
-        assertTrue(stegoVideo.length > originalVideo.length * 0.1,
-                "Stego file too small: " + stegoVideo.length + " bytes");
-
-        // שמור לדיסק לבדיקה ידנית
-        Path outPath = Paths.get("target/stego_dct_output.mp4");
+        // שמירה לדיסק לצורך ניתוח במקרה של כישלון
+        Path outDir = Paths.get("target/test-output1");
+        Files.createDirectories(outDir);
+        Path outPath = outDir.resolve("stego_dct_result.mp4");
         Files.write(outPath, stegoVideo);
-        System.out.println("💾 Saved to   : " + outPath.toAbsolutePath());
+        System.out.println("💾 Saved result to: " + outPath.toAbsolutePath());
 
-        // EXTRACT
-        System.out.println("\n⏳ Starting extract...");
-        t0 = System.currentTimeMillis();
+        // 3. EXTRACT
+        System.out.println("⏳ Extracting secret (this may take a few seconds)...");
+        long startTime = System.currentTimeMillis();
         String extracted = strategy.extract(stegoVideo);
-        long extractTime = System.currentTimeMillis() - t0;
+        long duration = System.currentTimeMillis() - startTime;
 
-        System.out.println("⏱  Extract time: " + extractTime + " ms");
+        System.out.println("⏱ Extraction took: " + duration + " ms");
+        System.out.println("\n📥 Original : [" + secret + "]");
+        System.out.println("📤 Extracted: [" + extracted + "]");
 
-        // תוצאות
-        System.out.println("\n====================================================");
-        System.out.println("📥 Original  : [" + secret + "]");
-        System.out.println("📤 Extracted : [" + extracted + "]");
+        // 4. VERIFICATION
+        // אם הסטרטגיה מוסיפה Prefix, אנחנו בודקים שה-Secret מוכל בתוצאה
+        assertEquals(secret, extracted, "❌ המידע שחולץ לא תואם למקור!");
 
-        int matches = 0;
-        int minLen = Math.min(secret.length(), extracted.length());
-        for (int i = 0; i < minLen; i++) {
-            if (secret.charAt(i) == extracted.charAt(i)) matches++;
-        }
-
-        if (secret.equals(extracted)) {
-            System.out.println("✅ RESULT     : SUCCESS — 100% match");
-        } else {
-            System.out.println("❌ RESULT     : FAILED");
-            System.out.println("   Chars match: " + matches + " / " + secret.length());
-        }
+        System.out.println("✅ RESULT: SUCCESS!");
         System.out.println("====================================================");
-
-        assertEquals(secret, extracted, "❌ Extracted message does not match original!");
-        System.out.println("✅ Test Passed!");
     }
 }

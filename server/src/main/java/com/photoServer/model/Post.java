@@ -18,7 +18,10 @@ public class Post {
     private String imageUrl;
     private String heatmapUrl;
     private String createdAt;
-
+    // הוסיפי את השדות האלו למחלקה הקיימת
+    private String mediaType; // "IMAGE" או "AUDIO"
+    private double snr;       // מדד איכות לשמע (במקום PSNR של תמונה)
+    private String mediaUrl;  // שם גנרי במקום imageUrl (אפשר להשאיר את imageUrl אם את לא רוצה לשנות ב-DB)
     // מדדים מדעיים
     private double psnr;
     private double ssim;
@@ -28,6 +31,11 @@ public class Post {
     private double capacity;
     private double processTime;
     private String chosenAlgorithm;
+    // בתוך Post.java - הוסף את השדות האלו:
+    private double motionVariance; // מדד תנועה לוידאו
+    private double bitrateMbps;    // איכות הוידאו
+    private double fps;            // קצב פריימים
+    // אפשר להשתמש ב-heatmapUrl גם לוידאו עבור "מפת תנועה" או Thumbnail
     private List<String> authorizedUsers = new ArrayList<>();
     // הודעות מוחבאות
     // private Map<String, String> userMessages = new HashMap<>();
@@ -35,10 +43,40 @@ public class Post {
     // 1. בנאי ריק חובה עבור Spring/MongoDB
     public Post() {}
 
+    public double getMotionVariance() {
+        return motionVariance;
+    }
+
+    public void setMotionVariance(double motionVariance) {
+        this.motionVariance = motionVariance;
+    }
+
+    public double getBitrateMbps() {
+        return bitrateMbps;
+    }
+
+    public void setBitrateMbps(double bitrateMbps) {
+        this.bitrateMbps = bitrateMbps;
+    }
+
+    public double getFps() {
+        return fps;
+    }
+
+    public void setFps(double fps) {
+        this.fps = fps;
+    }
+
     // 2. Getters & Setters (וודא שכולם קיימים)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-
+    // Getters & Setters
+    public String getMediaType() { return mediaType; }
+    public void setMediaType(String mediaType) { this.mediaType = mediaType; }
+    public double getSnr() { return snr; }
+    public void setSnr(double snr) { this.snr = snr; }
+    public String getMediaUrl() { return mediaUrl; }
+    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 

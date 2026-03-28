@@ -8,90 +8,103 @@ import org.springframework.stereotype.Component;
 
 import javax.sound.sampled.*;
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 @Component
 public class MagnitudeSpectrumStrategy extends BaseSteganoStrategy implements SteganoStrategy {
 
-    private static final int FRAME_SIZE = 1024;
-    private static final int FREQ_BIN = 300;
-    private static final double STEP = 0.15; // הגדלתי עוד קצת לעמידות שיא
-    private static final String START_CODE = "11110000";
+    private static final int WINDOW_SIZE = 1200;
+    private static final int Q_STEP      = 3000; // צעד עגול ונוח
+    private static final int ENERGY_THRESHOLD = 2000;
     private static final String MARKER = "##END##";
-
-    @Override
-    public String getName() { return "MagnitudeSpectrumStrategy"; }
-
-    @Override
-    public MediaType getSupportedType() { return MediaType.AUDIO; }
 
     @Override
     public byte[] embed(byte[] coverData, String secretMessage) {
         try {
-            AudioInputStream ais = getPcmStream(coverData);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(new ByteArrayInputStream(coverData));
             AudioFormat format = ais.getFormat();
-            double[] samples = bytesToDoubles(ais.readAllBytes());
+            byte[] audioBytes = ais.readAllBytes();
+            ais.close();
 
-            String fullBitString = START_CODE + toBitString((secretMessage + MARKER).getBytes(StandardCharsets.UTF_8));
+            String bits = toBitString((secretMessage + MARKER).getBytes(StandardCharsets.UTF_8));
+            int bitIdx = 0;
 
-            // אנחנו מתחילים מהחלון ה-100 כדי לעקוף רעשי Header בתחילת הקובץ
-            int startOffset = 100 * FRAME_SIZE;
-            int bitIndex = 0;
+            for (int i = 44; i < audioBytes.length - WINDOW_SIZE && bitIdx < bits.length(); i += WINDOW_SIZE) {
+                if (calculateWindowEnergy(audioBytes, i, WINDOW_SIZE) > ENERGY_THRESHOLD) {
+                    int targetIdx = i + 500;
+                    short sample = getSample(audioBytes, targetIdx);
+                    int bit = bits.charAt(bitIdx++) == '1' ? 1 : 0;
 
-            for (int i = startOffset; i < samples.length - FRAME_SIZE && bitIndex < fullBitString.length(); i += FRAME_SIZE) {
-                double val = samples[i + FREQ_BIN];
-                double magnitude = Math.abs(val);
-                double sign = Math.signum(val);
-                if (sign == 0) sign = 1;
-
-                int bit = fullBitString.charAt(bitIndex) == '1' ? 1 : 0;
-                samples[i + FREQ_BIN] = quantizeMagnitude(magnitude, bit) * sign;
-                bitIndex++;
+                    // שיטה חדשה: אם הביט הוא 1, נהפוך את ה-Zone לאי-זוגי. אם 0, לזוגי.
+                    setSample(audioBytes, targetIdx, encodeQIM(sample, bit));
+                }
             }
-
-            return createWavByteArray(doublesToBytes(samples), format);
+            return createWavByteArray(audioBytes, format);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     @Override
     public String extract(byte[] stegoData) {
         try {
-            AudioInputStream ais = getPcmStream(stegoData);
-            double[] samples = bytesToDoubles(ais.readAllBytes());
-            StringBuilder rawBits = new StringBuilder();
+            AudioInputStream ais = AudioSystem.getAudioInputStream(new ByteArrayInputStream(stegoData));
+            byte[] audioBytes = ais.readAllBytes();
+            ais.close();
 
-            int startOffset = 100 * FRAME_SIZE;
-
-            for (int i = startOffset; i < samples.length - FRAME_SIZE; i += FRAME_SIZE) {
-                double magnitude = Math.abs(samples[i + FREQ_BIN]);
-
-                double d0 = Math.abs(magnitude - getNearestStep(magnitude, 0));
-                double d1 = Math.abs(magnitude - getNearestStep(magnitude, 1));
-
-                rawBits.append(d1 < d0 ? "1" : "0");
+            StringBuilder bitStream = new StringBuilder();
+            // לוגיקת החילוץ מהחלונות
+            for (int i = 44; i < audioBytes.length - WINDOW_SIZE; i += WINDOW_SIZE) {
+                if (calculateWindowEnergy(audioBytes, i, WINDOW_SIZE) > (ENERGY_THRESHOLD - 500)) {
+                    short sample = getSample(audioBytes, i + 500);
+                    bitStream.append(decodeQIM(sample));
+                }
             }
 
-            String bitString = rawBits.toString();
-            int startIndex = bitString.indexOf(START_CODE);
-            if (startIndex == -1) return "Marker not found (Sync failed)";
+            // חילוץ הטקסט עד ל-MARKER (##END##)
+            String fullMessage = decodeToText(bitStream.toString());
 
-            return bitsToText(bitString.substring(startIndex + START_CODE.length()));
-        } catch (Exception e) { return "Error: " + e.getMessage(); }
+            // ❌ מוחקים את הקטע הזה! האלגוריתם לא צריך לחתוך ::
+            // if (fullMessage.contains("::")) { return fullMessage.split("::")[1]; }
+
+            // ✅ פשוט מחזירים את כל מה שמצאנו (ה-Header + ה-JSON)
+            return fullMessage;
+
+        } catch (Exception e) {
+            return "MARKER_NOT_FOUND"; // עדיף להחזיר את זה בשגיאה
+        }
+    }
+    // --- לוגיקת ה-Quantization החדשה והחסינה ---
+    private short encodeQIM(short sample, int bit) {
+        int val = sample + 32768; // הזזה לטווח חיובי בלבד (0-65536) כדי למנוע בעיות סימן
+        int zone = val / Q_STEP;
+        if (zone % 2 != bit) {
+            zone = (zone == 0) ? 1 : zone - 1;
+        }
+        int newVal = (zone * Q_STEP) + (Q_STEP / 2);
+        return (short) (newVal - 32768); // החזרה לטווח המקורי
     }
 
-    private double quantizeMagnitude(double mag, int bit) {
-        // רשת קשיחה: 0 יהיה כפולה של 2*STEP, 1 יהיה כפולה + STEP
-        double q0 = Math.round(mag / (2 * STEP)) * (2 * STEP);
-        return (bit == 0) ? q0 : q0 + STEP;
+    private int decodeQIM(short sample) {
+        int val = sample + 32768;
+        int zone = val / Q_STEP;
+        return zone % 2;
     }
 
-    private double getNearestStep(double mag, int bit) {
-        return quantizeMagnitude(mag, bit);
+    private int calculateWindowEnergy(byte[] data, int start, int len) {
+        long sum = 0;
+        for (int i = start; i < start + len - 1; i += 20) {
+            sum += Math.abs(getSample(data, i));
+        }
+        return (int) (sum / (len / 20));
     }
 
-    // --- Helpers ---
+    private short getSample(byte[] data, int idx) {
+        return (short) ((data[idx] & 0xFF) | (data[idx + 1] << 8));
+    }
+
+    private void setSample(byte[] data, int idx, short val) {
+        data[idx] = (byte) (val & 0xFF);
+        data[idx + 1] = (byte) ((val >> 8) & 0xFF);
+    }
 
     private String toBitString(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
@@ -101,49 +114,24 @@ public class MagnitudeSpectrumStrategy extends BaseSteganoStrategy implements St
         return sb.toString();
     }
 
-    private String bitsToText(String bitString) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i <= bitString.length() - 8; i += 8) {
-            try {
-                int charVal = Integer.parseInt(bitString.substring(i, i + 8), 2);
-                result.append((char) charVal);
-                if (result.toString().contains(MARKER)) {
-                    return result.toString().split(MARKER)[0];
-                }
-            } catch (Exception e) { break; }
-        }
-        return "Marker not found in payload";
-    }
-
-    private double[] bytesToDoubles(byte[] bytes) {
-        short[] s = new short[bytes.length / 2];
-        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(s);
-        double[] d = new double[s.length];
-        for (int i = 0; i < s.length; i++) d[i] = s[i] / 32768.0;
-        return d;
-    }
-
-    private byte[] doublesToBytes(double[] doubles) {
-        byte[] bytes = new byte[doubles.length * 2];
-        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-        for (double d : doubles) buffer.putShort((short) (Math.max(-1.0, Math.min(1.0, d)) * 32767));
-        return bytes;
-    }
-
-    private AudioInputStream getPcmStream(byte[] data) throws Exception {
-        AudioInputStream ais = AudioSystem.getAudioInputStream(new ByteArrayInputStream(data));
-        AudioFormat base = ais.getFormat();
-        // אילוץ ל-Mono כדי למנוע בעיות בערוצי סטריאו
-        AudioFormat target = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 1, 2, 44100, false);
-        return AudioSystem.getAudioInputStream(target, ais);
-    }
-
-    private byte[] createWavByteArray(byte[] pcm, AudioFormat f) throws IOException {
+    private String decodeToText(String bits) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        AudioSystem.write(new AudioInputStream(new ByteArrayInputStream(pcm), f, pcm.length/f.getFrameSize()), AudioFileFormat.Type.WAVE, baos);
-        return baos.toByteArray();
+        for (int i = 0; i <= bits.length() - 8; i += 8) {
+            int b = Integer.parseInt(bits.substring(i, i + 8), 2);
+            baos.write(b);
+            String s = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+            if (s.contains(MARKER)) return s.split(MARKER)[0];
+        }
+        return "MARKER_NOT_FOUND";
     }
 
-    @Override
-    public int calculateSuitability(FileMetrics metrics) { return 90; }
+    private byte[] createWavByteArray(byte[] data, AudioFormat f) throws IOException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        AudioSystem.write(new AudioInputStream(new ByteArrayInputStream(data), f, data.length/f.getFrameSize()), AudioFileFormat.Type.WAVE, b);
+        return b.toByteArray();
+    }
+
+    @Override public String getName() { return "MagnitudeSpectrumStrategy"; }
+    @Override public MediaType getSupportedType() { return MediaType.AUDIO; }
+    @Override public int calculateSuitability(FileMetrics m) { return 100; }
 }

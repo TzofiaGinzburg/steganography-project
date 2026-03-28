@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { BASE_URL } from '../api/Constants';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 const CreatePostScreen = ({ route, navigation }: any) => {
   const { target, groupId, userName } = route.params || {};
@@ -69,63 +70,104 @@ const CreatePostScreen = ({ route, navigation }: any) => {
     updateFilteredList('', newSelected);
   };
 
-  const pickFile = async () => {
-    try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles], 
-      });
-      setFile({ uri: res[0].uri, name: res[0].name, type: res[0].type });
-    } catch (e) {
-      console.log("User cancelled picker");
-    }
-  };
-
-  const handlePublish = async () => {
-  if (!file) return Alert.alert("עצור!", "חובה לבחור קובץ לפני הפרסום");
-  setLoading(true);
-
-  const formData = new FormData();
-  
-  // 1. הוספת הקובץ
-  formData.append('file', { 
-    uri: file.uri, 
-    type: file.type || 'image/png', 
-    name: file.name || 'photo.png' 
-  } as any);
-
-  // 2. נתונים רגילים
-  formData.append('description', description);
-  formData.append('senderUsername', userName);
-  formData.append('target', target === 'group' ? groupId : 'world');
-
-  // 3. שליחת כל מפת המסרים כ-JSON String
-  // השרת שלך מצפה לפרמטר בשם "userMessagesJson"
-  if (Object.keys(selectedRecipients).length > 0) {
-    formData.append('userMessagesJson', JSON.stringify(selectedRecipients));
-  }
-
+ const pickFile = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/posts/create`, { 
-      method: 'POST', 
-      body: formData,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'multipart/form-data',
-      },
+    const res = await DocumentPicker.pick({
+      type: [DocumentPicker.types.allFiles],
     });
 
-    if (res.ok) {
-      Alert.alert("הצלחה", "הפוסט הוצפן ופורסם! 🤫");
-      navigation.goBack();
-    } else {
-      Alert.alert("שגיאה בפרסום");
+    if (res && res[0]) {
+      const pickedFile = res[0];
+      
+      // 1. חילוץ השם והסוג המקוריים
+      let fileType = pickedFile.type;
+      const fileName = pickedFile.name || ""; // מבטיח שזה מחרוזת ולא null
+
+      // 2. תיקון האדום: שימוש ב-Optional Chaining (?.)
+      if (!fileType || fileType === 'application/octet-stream') {
+        // ה-?. מבטיח שאם ה-split או ה-pop נכשלו, זה לא יקרוס
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        
+        if (extension === 'wav') fileType = 'audio/wav';
+        else if (extension === 'mp3') fileType = 'audio/mpeg';
+      }
+
+      // 3. עדכון ה-State
+      setFile({
+        uri: pickedFile.uri,
+        name: fileName,
+        type: fileType || 'application/octet-stream'
+      });
+      
+      console.log("File picked successfully:", fileName);
     }
-  } catch (e) { 
-    Alert.alert("שגיאת חיבור"); 
-  } finally { 
-    setLoading(false); 
+  } catch (e) {
+    console.log("User cancelled or error");
   }
 };
+
+  const handlePublish = async () => {
+  if (!file) return Alert.alert("שגיאה", "בחר קובץ");
+  setLoading(true);
+
+  try {
+    // 1. ניקוי ותיקון ה-URI
+    let finalUri = file.uri;
+    
+    // הסרת תווים מיותרים שאנדרואיד לפעמים מוסיף בטעות
+    if (finalUri.startsWith('file://')) {
+        finalUri = finalUri.replace('file://', '');
+    }
+    
+    // פיענוח תווים מיוחדים (כמו רווחים או עברית בשם הקובץ)
+    finalUri = decodeURI(finalUri);
+
+    // 2. בדיקת קיום הקובץ במכשיר (הדפסות ל-Debug)
+    const fileExists = await ReactNativeBlobUtil.fs.exists(finalUri);
+    console.log("--- בדיקת קובץ לפני שליחה ---");
+    console.log("נתיב סופי:", finalUri);
+    console.log("האם הקובץ קיים במכשיר?", fileExists ? "✅ כן" : "❌ לא!");
+
+    if (fileExists) {
+        const fileStat = await ReactNativeBlobUtil.fs.stat(finalUri);
+        console.log("גודל הקובץ לקריאה:", fileStat.size, "בייטים");
+    }
+
+    // 3. השליחה האמיתית לשרת
+    const response = await ReactNativeBlobUtil.fetch('POST', `${BASE_URL}/posts/create`, {
+      'Content-Type': 'multipart/form-data',
+      'Accept': 'application/json',
+    }, [
+      { 
+        name: 'file', 
+        filename: file.name || 'upload.mp3', 
+        type: file.type || 'audio/mpeg', 
+        data: ReactNativeBlobUtil.wrap(finalUri) 
+      },
+      { name: 'description', data: String(description) },
+      { name: 'senderUsername', data: String(userName) },
+      { name: 'target', data: String(target === 'group' ? groupId : 'world') },
+      { name: 'userMessagesJson', data: JSON.stringify(selectedRecipients) }
+    ]);
+
+    const resText = response.data;
+    console.log("תשובת שרת גולמית:", resText);
+
+    if (response.respInfo.status === 200 || response.respInfo.status === 201) {
+        Alert.alert("הצלחה", "הפוסט פורסם בהצלחה! 🚀");
+        navigation.goBack();
+    } else {
+        Alert.alert("שגיאה מהשרת", resText || "שגיאה לא ידועה");
+    }
+
+  } catch (err: any) {
+    console.error("שגיאת שליחה מפורטת:", err);
+    Alert.alert("שגיאת חיבור", err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+   
   const isImage = file?.type?.startsWith('image/');
 
   return (

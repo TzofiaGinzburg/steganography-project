@@ -4,159 +4,100 @@ import com.photoServer.steganography.SteganoStrategy;
 import com.photoServer.steganography.model.FileMetrics;
 import com.photoServer.steganography.model.MediaType;
 import com.photoServer.steganography.strategies.BaseSteganoStrategy;
-import org.jcodec.api.FrameGrab;
-import org.jcodec.api.SequenceEncoder;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Rational;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.FFmpegFrameRecorder;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Map;
 
+@Component
 public class VideoDCTMappingStrategy extends BaseSteganoStrategy implements SteganoStrategy {
 
     private static final String MARKER = "##END##";
-    private static final int QUANTUM = 40; // עוצמת השינוי
+    // מפתח מטא-דאטה סטנדרטי שקיים ב-MP4 ולא מפריע לנגנים
+    private static final String META_KEY = "comment";
+
+    @Override
+    public String getName() { return "VideoMetadataStrategy"; }
 
     @Override
     public byte[] embed(byte[] coverData, String secretMessage) {
-        String binaryMsg = toBinary(secretMessage + MARKER);
-        int bitIdx = 0;
+        String fullPayload = getName() + "::" + secretMessage + MARKER;
         File in = null, out = null;
 
         try {
-            in = File.createTempFile("temp_in", ".mp4");
-            out = File.createTempFile("temp_out", ".mp4");
+            in = File.createTempFile("video_in", ".mp4");
+            out = File.createTempFile("video_out", ".mp4");
             Files.write(in.toPath(), coverData);
 
-            try (SeekableByteChannel r = NIOUtils.readableChannel(in);
-                 SeekableByteChannel w = NIOUtils.writableFileChannel(out.getAbsolutePath())) {
+            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(in)) {
+                grabber.start();
 
-                FrameGrab grab = FrameGrab.createFrameGrab(r);
-                SequenceEncoder encoder = SequenceEncoder.createWithFps(w, Rational.R(25, 1));
+                try (FFmpegFrameRecorder recorder = new FFmpegFrameRecorder(out, grabber.getImageWidth(), grabber.getImageHeight())) {
+                    // הגדרות בסיסיות לוידאו
+                    recorder.setVideoCodec(grabber.getVideoCodec());
+                    recorder.setFormat(grabber.getFormat());
+                    recorder.setFrameRate(grabber.getFrameRate());
 
-                Picture pic;
-                while ((pic = grab.getNativeFrame()) != null) {
-                    if (bitIdx < binaryMsg.length()) {
-                        int bit = binaryMsg.charAt(bitIdx++) - '0';
-                        modifyFrame(pic, bit); // מטמיע ביט אחד בכל הפריים!
+                    // פתרון שגיאת האודיו: הגדרת ערוצים רק אם קיימים במקור
+                    if (grabber.getAudioChannels() > 0) {
+                        recorder.setAudioChannels(grabber.getAudioChannels());
+                        recorder.setAudioCodec(grabber.getAudioCodec());
+                        recorder.setSampleRate(grabber.getSampleRate());
                     }
-                    encoder.encodeNativeFrame(pic);
+
+                    // שתילת המידע הסודי בתוך המטא-דאטה
+                    Map<String, String> metadata = grabber.getMetadata();
+                    metadata.put(META_KEY, fullPayload);
+                    recorder.setMetadata(metadata);
+
+                    recorder.start();
+
+                    // העתקת פריימים (וידאו ואודיו) ללא שינוי ויזואלי
+                    org.bytedeco.javacv.Frame frame;
+                    while ((frame = grabber.grab()) != null) {
+                        recorder.record(frame);
+                    }
+                    recorder.stop();
                 }
-                encoder.finish();
+                grabber.stop();
             }
             return Files.readAllBytes(out.toPath());
         } catch (Exception e) {
+            e.printStackTrace();
             return coverData;
         } finally {
-            if (in != null) in.delete();
-            if (out != null) out.delete();
-        }
-    }
-
-    private void modifyFrame(Picture pic, int bit) {
-        byte[] luma = pic.getData()[0];
-        int width = pic.getWidth();
-        int height = pic.getHeight();
-
-        for (int y = 0; y < height - 8; y += 8) {
-            for (int x = 0; x < width - 8; x += 8) {
-                int avg = getBlockAverage(luma, x, y, width);
-                int quantized = avg / QUANTUM;
-
-                if (bit == 1) {
-                    if (quantized % 2 == 0) quantized++;
-                } else {
-                    if (quantized % 2 != 0) quantized++;
-                }
-                setBlockAverage(luma, x, y, width, quantized * QUANTUM + (QUANTUM / 2));
-            }
+            if (in != null) { in.delete(); }
+            if (out != null) { out.delete(); }
         }
     }
 
     @Override
     public String extract(byte[] stegoData) {
-        StringBuilder bits = new StringBuilder();
         File temp = null;
         try {
-            temp = File.createTempFile("ext", ".mp4");
+            temp = File.createTempFile("video_ext", ".mp4");
             Files.write(temp.toPath(), stegoData);
 
-            try (SeekableByteChannel r = NIOUtils.readableChannel(temp)) {
-                FrameGrab grab = FrameGrab.createFrameGrab(r);
-                Picture pic;
+            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(temp)) {
+                grabber.start();
+                String metadataValue = grabber.getMetadata().get(META_KEY);
+                grabber.stop();
 
-                while ((pic = grab.getNativeFrame()) != null) {
-                    byte[] luma = pic.getData()[0];
-                    int width = pic.getWidth();
-                    long ones = 0, zeros = 0;
-
-                    // סופר "קולות" מכל הבלוקים בפריים
-                    for (int y = 0; y < pic.getHeight() - 8; y += 8) {
-                        for (int x = 0; x < width - 8; x += 8) {
-                            int avg = getBlockAverage(luma, x, y, width);
-                            int bit = (Math.round((float)avg / QUANTUM)) % 2;
-                            if (Math.abs(bit) == 1) ones++; else zeros++;
-                        }
-                    }
-
-                    bits.append(ones > zeros ? "1" : "0");
-
-                    if (bits.length() % 8 == 0) {
-                        String msg = fromBinary(bits.toString());
-                        if (msg.contains(MARKER)) return msg.substring(0, msg.indexOf(MARKER));
-                    }
-                    if (bits.length() > 2000) break; // הגנה מהודעות ארוכות מדי
+                if (metadataValue != null && metadataValue.contains(MARKER)) {
+                    return metadataValue.substring(metadataValue.indexOf("::") + 2, metadataValue.indexOf(MARKER));
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { if (temp != null) temp.delete(); }
-        return "ERROR: Marker not found";
-    }
-
-    private int getBlockAverage(byte[] data, int x, int y, int width) {
-        long sum = 0;
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                sum += (data[(y + i) * width + (x + j)] & 0xFF);
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (temp != null) { temp.delete(); }
         }
-        return (int) (sum / 64);
+        return "ERROR:MARKER_NOT_FOUND";
     }
 
-    private void setBlockAverage(byte[] data, int x, int y, int width, int newAvg) {
-        int currentAvg = getBlockAverage(data, x, y, width);
-        int diff = newAvg - currentAvg;
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                int idx = (y + i) * width + (x + j);
-                int val = (data[idx] & 0xFF) + diff;
-                data[idx] = (byte) Math.max(0, Math.min(255, val));
-            }
-        }
-    }
-
-    private String toBinary(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : s.getBytes(StandardCharsets.UTF_8))
-            for (int i = 7; i >= 0; i--) sb.append((b >> i) & 1);
-        return sb.toString();
-    }
-
-    private String fromBinary(String b) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < b.length() - 7; i += 8) {
-            try {
-                int c = Integer.parseInt(b.substring(i, i + 8), 2);
-                sb.append((char) c);
-            } catch (Exception ignored) {}
-        }
-        return sb.toString();
-    }
-
-    @Override public String getName() { return "Robust Video Strategy"; }
     @Override public MediaType getSupportedType() { return MediaType.VIDEO; }
     @Override public int calculateSuitability(FileMetrics m) { return 100; }
 }

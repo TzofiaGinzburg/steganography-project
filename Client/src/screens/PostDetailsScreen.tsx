@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, Image, FlatList, TextInput, 
+  View, Text,Alert, Image, FlatList, TextInput, 
   TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, 
   SafeAreaView, StatusBar
 } from 'react-native';
@@ -86,18 +86,36 @@ const PostDetailsScreen = ({ route, navigation }: any) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listPadding}
           ListHeaderComponent={() => (
-            <View style={styles.headerContainer}>
-              <Text style={styles.mainAuthorName}>פורסם על ידי: {post.author}</Text>
-              <View style={styles.imageFrame}>
-                <Image source={{ uri: post.imageUrl }} style={styles.fullImage} />
-              </View>
-              <View style={styles.postDetails}>
-                <Text style={styles.descriptionLabel}>תיאור הקובץ:</Text>
-                <Text style={styles.detailDesc}>{post.description}</Text>
-                <View style={styles.divider} />
-                <Text style={styles.commentHeading}>תגובות ({comments.length})</Text>
-              </View>
-            </View>
+           <View style={styles.headerContainer}>
+  <Text style={styles.mainAuthorName}>פורסם על ידי: {post.author}</Text>
+  
+  <View style={styles.imageFrame}>
+    <Image source={{ uri: post.imageUrl }} style={styles.fullImage} />
+  </View>
+
+  <View style={styles.postDetails}>
+    <Text style={styles.descriptionLabel}>תיאור הקובץ:</Text>
+    <Text style={styles.detailDesc}>{post.description}</Text>
+    
+    <View style={styles.divider} />
+
+    {/* כפתור פרטי הצפנה - מעוצב וטכנולוגי */}
+    <TouchableOpacity 
+      style={styles.infoButton} 
+      onPress={() => Alert.alert(
+        "📊 מדדי איכות סטגנוגרפיים",
+        `🛡️ אלגוריתם: ${post.chosenAlgorithm || 'נבחר אוטומטית'}\n` +
+        `📉 רעש (PSNR): ${post.psnr?.toFixed(2)} dB\n` +
+        `🔗 דמיון (SSIM): ${post.ssim?.toFixed(4)}\n` +
+        `📦 דחיסות (BPP): ${post.bpp?.toFixed(4)} bits/px`
+      )}
+    >
+      <Text style={styles.infoButtonText}>🔍 הצג נתוני הצפנה מדעים</Text>
+    </TouchableOpacity>
+
+    <Text style={styles.commentHeading}>תגובות ({comments.length})</Text>
+  </View>
+</View> 
           )}
           renderItem={renderComment}
         />
@@ -143,6 +161,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     transform: [{ scaleX: -1 }] // הופך את החץ לצד השני כדי שיסמן חזרה
   },
+  infoButton: {
+  backgroundColor: '#E1D5FF',
+  padding: 12,
+  borderRadius: 10,
+  alignItems: 'center',
+  marginVertical: 10,
+  borderWidth: 1,
+  borderColor: '#6200EE',
+  borderStyle: 'dashed',
+},
+infoButtonText: {
+  color: '#6200EE',
+  fontWeight: 'bold',
+  fontSize: 14,
+},
   backButtonText: { fontSize: 22, color: '#6200EE', fontWeight: 'bold' },
   listPadding: { paddingBottom: 20 },
   headerContainer: { padding: 15 },

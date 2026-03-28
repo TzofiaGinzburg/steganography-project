@@ -674,114 +674,129 @@ const GroupDetailsScreen = ({ route, navigation }: any) => {
   };
 
   const handleDecrypt = async (post: any) => {
-    setIsDecrypting(true);
-    try {
-      const response = await fetch(`${BASE_URL}/posts/${post.id}/decrypt?userName=${userName}`);
-      const data = await response.json();
+  setIsDecrypting(true);
+  try {
+    const response = await fetch(`${BASE_URL}/posts/${post.id}/decrypt?userName=${userName}`);
+    const data = await response.json();
 
-      if (data.secret) {
-        Alert.alert(
-          "🔓 חילוץ מדעי מהפיקסלים הושלם",
-          `המסר: ${data.secret}\n\n` +
-          `🔬 אלגוריתם: ${post.chosenAlgorithm || 'Dynamic Stegano'}\n` +
-          `📊 איכות (PSNR): ${post.psnr?.toFixed(2)} dB\n` +
-          `🔗 דמיון (SSIM): ${post.ssim?.toFixed(4)}\n` +
-          `🌀 אנטרופיה: ${post.entropy?.toFixed(4)}\n` +
-          `📐 צפיפות קצוות: ${post.edgeDensity?.toFixed(4)}\n` +
-          `📦 יעילות (BPP): ${post.bpp?.toFixed(4)}`,
-          [
-            { text: "סגור", style: "cancel" },
-            { 
-              text: "🔥 הצג מפת חום", 
-              onPress: () => {
-                setCurrentHeatmapUrl(post.heatmapUrl);
-                setHeatmapVisible(true);
-              } 
-            }
-          ]
-        );
-      }
-    } catch (e) {
-      Alert.alert("שגיאה", "נכשל החילוץ מהשרת");
-    } finally {
+    // בדיקה אם השרת החזיר הודעת שגיאה במבנה של {message: "..."}
+    if (!data.secret) {
+      Alert.alert("הודעה", data.message || "לא נמצא מסר מוצפן עבורך.");
       setIsDecrypting(false);
+      return;
     }
-  };
 
+    // 1. זיהוי סוג המדיה בצורה בטוחה
+    const isAudio = post.mediaType === 'AUDIO' || 
+                    post.imageUrl?.toLowerCase().endsWith('.wav') || 
+                    post.imageUrl?.toLowerCase().endsWith('.mp3');
+
+    // 2. הגדרת כותרות וכפתורים
+    const title = isAudio ? "🎵 חילוץ מדעי מהתדרים הושלם" : "🔓 חילוץ מדעי מהפיקסלים הושלם";
+    const visualBtnText = isAudio ? "📊 הצג ספקטרוגרמה" : "🔥 הצג מפת חום";
+
+    // 3. בניית מחרוזת המדדים בצורה בטוחה (למניעת שגיאת Text strings)
+    let metrics = `המסר: ${String(data.secret)}\n\n`;
+    metrics += `🔬 אלגוריתם: ${String(post.chosenAlgorithm || 'Dynamic Adaptive')}\n`;
+
+    if (isAudio) {
+      metrics += `📊 איכות (SNR): ${post.snr ? post.snr.toFixed(2) : '0.00'} dB\n`;
+      metrics += `🌀 חציית אפס (ZCR): ${post.zcr ? post.zcr.toFixed(4) : '0.0000'}\n`;
+      metrics += `📦 יעילות: ${post.bpp ? post.bpp.toFixed(4) : '0.0000'}`;
+    } else {
+      metrics += `📊 איכות (PSNR): ${post.psnr ? post.psnr.toFixed(2) : '0.00'} dB\n`;
+      metrics += `🔗 דמיון (SSIM): ${post.ssim ? post.ssim.toFixed(4) : '0.0000'}\n`;
+      metrics += `🌀 אנטרופיה: ${post.entropy ? post.entropy.toFixed(4) : '0.0000'}\n`;
+      metrics += `📐 צפיפות קצוות: ${post.edgeDensity ? post.edgeDensity.toFixed(2) : '0.00'}%\n`;
+      metrics += `📦 יעילות (BPP): ${post.bpp ? post.bpp.toFixed(4) : '0.0000'}`;
+    }
+
+    // 4. הצגת ה-Alert הסופי
+    Alert.alert(
+      title,
+      metrics,
+      [
+        { text: "סגור", style: "cancel" },
+        { 
+          text: visualBtnText, 
+          onPress: () => {
+            if (post.heatmapUrl) {
+              setCurrentHeatmapUrl(post.heatmapUrl);
+              setHeatmapVisible(true);
+            } else {
+              Alert.alert("הודעה", "לא קיימת ויזואליזציה לקובץ זה");
+            }
+          } 
+        }
+      ]
+    );
+
+  } catch (e) {
+    console.error("Decrypt error:", e);
+    Alert.alert("שגיאה", "נכשל החילוץ מהשרת.");
+  } finally {
+    setIsDecrypting(false);
+  }
+};
+  
  const renderPost = ({ item }: { item: any }) => {
-    const isMyPost = item.author === userName;
-    
-    // --- לוגיקת שליפה מעודכנת ומאובטחת ---
-    // בודק האם השם שלי מופיע ברשימת המורשים שנשלחה מהשרת
-    const hasSecret = item.authorizedUsers && 
-                      item.authorizedUsers.some((u: string) => u.toLowerCase() === userName?.toLowerCase());
+  const isMyPost = item.author === userName;
+  const isAudio = item.imageUrl?.endsWith('.wav') || item.imageUrl?.endsWith('.mp3') || item.mediaType === 'AUDIO';
+  
+  const hasSecret = item.authorizedUsers && 
+                    item.authorizedUsers.some((u: string) => u.toLowerCase() === userName?.toLowerCase());
 
-    const dateObj = new Date(item.createdAt);
-    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
-
-    return (
-      <TouchableOpacity 
-        activeOpacity={0.9}
-        onPress={() => navigation.navigate('PostDetails', { post: item, userName })}
-        style={styles.postWrapper}
-      >
-        <View style={[styles.modernCard, isMyPost ? styles.myCardBg : styles.theirCardBg]}>
-          
-          {/* תמונה - מופיעה ראשונה בקוד כדי שתהיה בימין בגלל row-reverse */}
-          {item.imageUrl && (
-            <View style={styles.imageSection}>
-              <Image 
-                source={{ uri: item.imageUrl }} 
-                style={styles.postImage} 
-                resizeMode="cover"
-              />
-              {isMyPost && <View style={styles.myBadge}><Text style={styles.myBadgeText}>שלי</Text></View>}
+  return (
+    <TouchableOpacity 
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('PostDetails', { post: item, userName })}
+      style={styles.postWrapper}
+    >
+      <View style={[styles.modernCard, isMyPost ? styles.myCardBg : styles.theirCardBg]}>
+        
+        {/* תצוגת מדיה (תמונה או אודיו) */}
+        <View style={styles.imageSection}>
+          {isAudio ? (
+            <View style={[styles.postImage, { backgroundColor: '#075E54', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ fontSize: 40 }}>🎵</Text>
             </View>
+          ) : (
+            <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
           )}
+          {isMyPost && <View style={styles.myBadge}><Text style={styles.myBadgeText}>שלי</Text></View>}
+        </View>
 
-          {/* תוכן הפוסט - יופיע משמאל לתמונה */}
-          <View style={styles.contentSection}>
-            <View style={styles.topRow}>
-              <Text style={[styles.authorName, { color: isMyPost ? '#075E54' : '#E91E63' }]}>
-                {isMyPost ? "אני" : item.author}
-              </Text>
-              <View style={styles.dateTimeContainer}>
-                <Text style={styles.dateTimeText}>{timeStr} | {dateStr}</Text>
-              </View>
-            </View>
+        <View style={styles.contentSection}>
+          <View style={styles.topRow}>
+            <Text style={[styles.authorName, { color: isMyPost ? '#075E54' : '#E91E63' }]}>
+              {isMyPost ? "אני" : item.author}
+            </Text>
+            <Text style={styles.dateTimeText}>{new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+          </View>
 
-            <View style={styles.descriptionArea}>
-              <Text style={styles.descriptionText} numberOfLines={3}>
-                {item.description}
-              </Text>
-              
-              {/* הצגת כוכב הפענוח במידה ויש הודעה עבור המשתמש */}
-              {hasSecret && (
-                <TouchableOpacity 
-                  style={styles.starButton}
-                  onPress={() => handleDecrypt(item)}
-                  disabled={isDecrypting}
-                >
-                  {isDecrypting ? (
-                    <ActivityIndicator size="small" color="#FFD700" />
-                  ) : (
-                    <Text style={{fontSize: 18}}>⭐</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <View style={styles.footerRow}>
-              <Text style={styles.actionText}>💬 תגובות ופירוט</Text>
-              {isMyPost && <Text style={styles.blueTicks}>✔️✔️</Text>}
-            </View>
+          <View style={styles.descriptionArea}>
+            <Text style={styles.descriptionText} numberOfLines={3}>{item.description}</Text>
+            
+            {/* הכוכב שעכשיו יעבוד גם לאודיו! */}
+            {hasSecret && (
+              <TouchableOpacity 
+                style={styles.starButton}
+                onPress={() => handleDecrypt(item)}
+                disabled={isDecrypting}
+              >
+                {isDecrypting ? (
+                  <ActivityIndicator size="small" color="#FFD700" />
+                ) : (
+                  <Text style={{fontSize: 18}}>⭐</Text>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  };
-
+      </View>
+    </TouchableOpacity>
+  );
+};
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#075E54" />

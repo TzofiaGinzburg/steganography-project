@@ -16,7 +16,7 @@ import java.util.Random;
 @Component
 public class AudioDsssStrategy extends BaseSteganoStrategy implements SteganoStrategy {
 
-    private static final int CHIP_RATE = 1024; // העליתי ל-1024 ליציבות מקסימלית
+    private static final int CHIP_RATE = 512; // העליתי ל-1024 ליציבות מקסימלית
     private static final double ALPHA = 0.05;  // העליתי עוצמה כדי לוודא זיהוי
     private static final long SEED = 12345;    // סיד קבוע
     private static final String MARKER = "##END##";
@@ -109,10 +109,20 @@ public class AudioDsssStrategy extends BaseSteganoStrategy implements SteganoStr
         InputStream bis = new ByteArrayInputStream(audioData);
         AudioInputStream ais = AudioSystem.getAudioInputStream(bis);
         AudioFormat baseFormat = ais.getFormat();
+
+        // הגדרת פורמט המטרה: PCM Signed, 16-bit, Little Endian
+        // זה הפורמט הסטנדרטי שבו אפשר לבצע QIM על ה-Samples
         AudioFormat targetFormat = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED, baseFormat.getSampleRate(), 16,
-                baseFormat.getChannels(), baseFormat.getChannels() * 2, baseFormat.getSampleRate(), false
+                AudioFormat.Encoding.PCM_SIGNED,
+                baseFormat.getSampleRate(),
+                16,
+                baseFormat.getChannels(),
+                baseFormat.getChannels() * 2,
+                baseFormat.getSampleRate(),
+                false // false = Little Endian
         );
+
+        // המרה של הסטרים מ-MP3 ל-PCM
         return AudioSystem.getAudioInputStream(targetFormat, ais);
     }
 

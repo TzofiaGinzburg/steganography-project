@@ -91,4 +91,20 @@ public class AudioFileAnalyzer implements MediaAnalyzer {
         }
         return (double) changes / sampleCount;
     }
+    public double checkIsCompressed(byte[] data) {
+        if (data.length < 3) return 0.0;
+
+        // חתימה של MP3 (ID3 tag או Frame Sync)
+        if ((data[0] == (byte) 0x49 && data[1] == (byte) 0x44 && data[2] == (byte) 0x33) ||
+                (data[0] == (byte) 0xFF && (data[1] & 0xE0) == 0xE0)) {
+            return 1.0; // זה MP3
+        }
+
+        // אם זה RIFF/WAVE - זה לא דחוס (Lossless)
+        if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F') {
+            return 0.0;
+        }
+
+        return 0.0;
+    }
 }
