@@ -94,7 +94,7 @@ public class AudioLSBStrategy extends BaseSteganoStrategy implements SteganoStra
         return "Marker not found";
     }
 
-    private String bitsToText(String bitString) {
+    protected String bitsToText(String bitString) {
         int charCount = bitString.length() / 8;
         byte[] bytes = new byte[charCount];
         for (int i = 0; i < charCount; i++) {

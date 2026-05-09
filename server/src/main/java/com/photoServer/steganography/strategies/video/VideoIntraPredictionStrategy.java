@@ -98,7 +98,7 @@ public class VideoIntraPredictionStrategy extends BaseSteganoStrategy implements
         return sb.toString();
     }
 
-    private String bitsToText(String bits) {
+    protected String bitsToText(String bits) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bits.length() - 7; i += 8) {
             try {
@@ -116,7 +116,7 @@ public class VideoIntraPredictionStrategy extends BaseSteganoStrategy implements
         return res;
     }
 
-    @Override public String getName() { return "IPM-Video-Debug"; }
+    @Override public String getName() { return "VideoIntraPredictionStrategy"; }
     @Override public MediaType getSupportedType() { return MediaType.VIDEO; }
     @Override public int calculateSuitability(FileMetrics metrics) { return 100; }
 }

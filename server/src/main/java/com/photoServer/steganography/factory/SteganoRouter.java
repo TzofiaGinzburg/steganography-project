@@ -83,7 +83,7 @@ public class SteganoRouter {
         String ideal = "VideoMetadataStrategy";
 
         if (motion > 3.0) {
-            ideal = "MotionVectorStrategy";
+            ideal = "VideoMotionVectorStrategy";
         } else if (bitrate > 50.0) {
             ideal = "VideoLSBStrategy";
         } else if (motion < 0.5) {
@@ -114,7 +114,7 @@ public class SteganoRouter {
         // 3. אם הקיבולת מטורפת (מעל 10%) - נשתמש ב-Metadata כדי לא להרוס את התמונה
         if (ratio > 0.10) {
             System.out.println("🚨 [CAPACITY] Massive Payload. Forcing Metadata Strategy to avoid video corruption.");
-            return "VideoMetadataStrategy";
+            return "VideoMotionVectorStrategy";
         }
 
         return ideal;

@@ -127,7 +127,7 @@ public class AudioEchoStrategy extends BaseSteganoStrategy implements SteganoStr
         return bits;
     }
 
-    private String bitsToText(String bits) {
+    protected String bitsToText(String bits) {
         try {
             byte[] bytes = new byte[bits.length() / 8];
             for (int i = 0; i < bytes.length; i++)

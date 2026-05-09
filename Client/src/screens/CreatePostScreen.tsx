@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { BASE_URL } from '../api/Constants';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-
+import Video from 'react-native-video';
 const CreatePostScreen = ({ route, navigation }: any) => {
   const { target, groupId, userName } = route.params || {};
 
@@ -169,7 +169,7 @@ const CreatePostScreen = ({ route, navigation }: any) => {
 };
    
   const isImage = file?.type?.startsWith('image/');
-
+const isVideo = file?.type?.startsWith('video/'); // <-- הוספה: זיהוי וידאו
   return (
     <SafeAreaView style={styles.container}>
       
@@ -189,23 +189,34 @@ const CreatePostScreen = ({ route, navigation }: any) => {
           
           <Text style={styles.headerTitle}>יצירת פוסט חכם ✨</Text>
 
-          <TouchableOpacity style={[styles.mediaCard, file && styles.mediaCardActive]} onPress={pickFile}>
-            {file ? (
-              isImage ? (
-                <Image source={{ uri: file.uri }} style={styles.fullImage} />
-              ) : (
-                <View style={styles.fileInfo}>
-                  <Text style={styles.fileEmoji}>📄</Text>
-                  <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
-                </View>
-              )
-            ) : (
-              <View style={styles.uploadPlaceholder}>
-                <View style={styles.plusCircle}><Text style={styles.plusText}>+</Text></View>
-                <Text style={styles.uploadText}>לחץ לבחירת כל סוג קובץ</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+         {/* החלף את בלוק ה-mediaCard בזה: */}
+<TouchableOpacity style={[styles.mediaCard, file && styles.mediaCardActive]} onPress={pickFile}>
+  {file ? (
+    isImage ? (
+      <Image source={{ uri: file.uri }} style={styles.fullImage} />
+    ) : isVideo ? (
+      /* כאן הוספנו את הנגן לתצוגה מקדימה */
+      <Video 
+        source={{ uri: file.uri }} 
+        style={styles.fullImage}
+        resizeMode="cover"
+        repeat={true}
+        muted={true}
+        paused={false}
+      />
+    ) : (
+      <View style={styles.fileInfo}>
+        <Text style={styles.fileEmoji}>🎵</Text>
+        <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+      </View>
+    )
+  ) : (
+    <View style={styles.uploadPlaceholder}>
+      <View style={styles.plusCircle}><Text style={styles.plusText}>+</Text></View>
+      <Text style={styles.uploadText}>לחץ לבחירת תמונה, אודיו או וידאו</Text>
+    </View>
+  )}
+</TouchableOpacity>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>מה בראש שלך? ✍️</Text>

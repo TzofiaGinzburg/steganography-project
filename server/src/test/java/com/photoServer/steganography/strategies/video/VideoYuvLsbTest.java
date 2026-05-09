@@ -1,59 +1,49 @@
 package com.photoServer.steganography.strategies.video;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ClassPathResource;
 import java.io.File;
 import java.nio.file.Files;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VideoYuvLsbTest {
 
     @Test
-    void testYuvLsbWithResourceFile() throws Exception {
+    public void testYuvLsbWithResourceFile() throws Exception {
+        ClassLoader cl = getClass().getClassLoader();
+        java.net.URL resource = cl.getResource("raw_video.yuv");
+        assertNotNull(resource, "❌ raw_video.yuv not found in test resources!");
+
+        byte[] coverData = Files.readAllBytes(new File(resource.toURI()).toPath());
+        System.out.println("🎬 Loaded raw YUV: " + coverData.length + " bytes");
+
+        String secret = "LSB_Secret_2026";
         VideoYuvLsbStrategy strategy = new VideoYuvLsbStrategy();
 
-        // 1. גישה לקובץ ה-Resource באמצעות Spring Bootstrap logic
-        // הקובץ חייב להיות ב-src/test/resources/raw_video.yuv
-        File videoFile = new ClassPathResource("raw_video.yuv").getFile();
-        byte[] originalYuvData = Files.readAllBytes(videoFile.toPath());
+        // Embed
+        byte[] stegoData = strategy.embed(coverData, secret);
+        assertNotNull(stegoData);
+        assertTrue(stegoData.length > 0, "❌ embed() returned empty array");
+        assertEquals(coverData.length, stegoData.length,
+                "Stego size must match cover size (raw YUV, no container)");
 
-        assertNotNull(originalYuvData, "הקובץ לא נטען כראוי");
-        System.out.println("🎬 Loaded Uncompressed Video: " + videoFile.getName());
-        System.out.println("📊 Data Size: " + originalYuvData.length + " bytes (YUV Domain)");
+        // Extract
+        String extracted = strategy.extract(stegoData);
+        System.out.println("🔓 Extracted: \"" + extracted + "\"");
+        assertEquals(secret, extracted, "❌ Message not recovered correctly!");
 
-        // 2. הגדרת המסר הסודי
-        String secretMessage = "HighFidelity_4K_LSB_Master";
-
-        // 3. שלב ההטמנה (Embedding)
-        byte[] stegoVideo = strategy.embed(originalYuvData, secretMessage);
-
-        // 4. שלב השליפה (Extraction)
-        String extracted = strategy.extract(stegoVideo);
-
-        // 5. חישוב מדדי איכות אקדמיים
-        double mse = calculateMSE(originalYuvData, stegoVideo);
-        double psnr = calculatePSNR(mse);
-
-        System.out.println("\n--- [RESULTS] ---");
-        System.out.println("Extracted: " + extracted);
-        System.out.println("MSE (Error): " + mse);
-        System.out.println("PSNR (Quality): " + psnr + " dB");
-
-        // ולידציה
-        assertEquals(secretMessage, extracted, "המסר שחולץ אינו תואם למקור!");
+        // MSE check — LSB changes should be imperceptible
+        double mse = calculateMSE(coverData, stegoData);
+        System.out.printf("📊 MSE (Y-plane distortion): %.4f%n", mse);
+        assertTrue(mse < 1.0, "MSE too high — too many pixels were changed!");
     }
 
     private double calculateMSE(byte[] original, byte[] stego) {
-        double sum = 0;
+        assertEquals(original.length, stego.length);
+        long sum = 0;
         for (int i = 0; i < original.length; i++) {
-            sum += Math.pow((original[i] & 0xFF) - (stego[i] & 0xFF), 2);
+            int diff = (original[i] & 0xFF) - (stego[i] & 0xFF);
+            sum += (long) diff * diff;
         }
-        return sum / original.length;
-    }
-
-    private double calculatePSNR(double mse) {
-        if (mse == 0) return 100;
-        return 10 * Math.log10((255 * 255) / mse);
+        return (double) sum / original.length;
     }
 }

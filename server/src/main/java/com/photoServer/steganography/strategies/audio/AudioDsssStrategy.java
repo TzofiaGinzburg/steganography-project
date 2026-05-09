@@ -140,7 +140,7 @@ public class AudioDsssStrategy extends BaseSteganoStrategy implements SteganoStr
         return bits;
     }
 
-    private String bitsToText(String bitString) {
+    protected String bitsToText(String bitString) {
         try {
             int len = bitString.length() / 8;
             byte[] bytes = new byte[len];

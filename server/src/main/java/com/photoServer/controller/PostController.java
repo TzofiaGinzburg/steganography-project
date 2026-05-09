@@ -40,41 +40,27 @@ public class PostController {
     @PostMapping("/create")
     public ResponseEntity<?> createPost(
             @RequestParam("file") MultipartFile file,
-            @RequestHeader Map<String, String> headers, // הוספתי כדי לראות את ה-Headers
+            @RequestHeader Map<String, String> headers,
             @RequestParam("description") String description,
             @RequestParam("senderUsername") String senderUsername,
             @RequestParam("target") String target,
             @RequestParam(value = "userMessagesJson", required = false) String userMessagesJson) {
 
         try {
-            System.out.println("--- SERVER DEBUG START ---");
-            System.out.println("Content-Type Header: " + headers.get("content-type"));
-
-            if (file == null) {
-                System.out.println("❌ MultipartFile is NULL");
-            } else {
-                System.out.println("File Param Name: " + file.getName());
-                System.out.println("Original Filename: " + file.getOriginalFilename());
-                System.out.println("Declared Content Type: " + file.getContentType());
-                System.out.println("File Size (bytes): " + file.getSize());
-            }
-
+            // --- בדיקות תקינות קובץ (נשאר ללא שינוי) ---
             if (file == null || file.isEmpty()) {
-                System.out.println("❌ הקובץ הגיע ריק (size 0 או empty)");
                 return ResponseEntity.badRequest().body("File is empty or null");
             }
 
             byte[] originalBytes = file.getBytes();
-            System.out.println("✅ הצלחנו לקרוא בייטים! אורך: " + originalBytes.length);
             String originalFileName = file.getOriginalFilename();
             String contentType = file.getContentType();
 
-            System.out.println("✅ התקבל קובץ: " + originalFileName + " בגודל: " + originalBytes.length);
-
-            // --- שלב 2: זיהוי סוג המדיה ---
+            // --- שלב 2: זיהוי סוג המדיה (הוספת תמיכה בוידאו) ---
             boolean isAudio = contentType != null && contentType.startsWith("audio");
+            boolean isVideo = contentType != null && contentType.startsWith("video");
 
-            // --- שלב 3: הפעלת שירות הסטגנוגרפיה (פעם אחת!) ---
+            // --- שלב 3: הפעלת שירות הסטגנוגרפיה (הסרביס כבר מזהה וידאו ומפעיל את הראוטר החדש) ---
             Map<String, Object> results = steganographyService.hideWithFullMetrics(originalFileName, originalBytes, userMessagesJson);
             byte[] stegoBytes = (byte[]) results.get("bytes");
 
@@ -88,7 +74,13 @@ public class PostController {
             newPost.setDescription(description);
             newPost.setTarget(target);
             newPost.setCreatedAt(LocalDateTime.now());
-            newPost.setMediaType(isAudio ? "AUDIO" : "IMAGE");
+
+            // עדכון סוג המדיה בפוסט
+            if (isVideo) {
+                newPost.setMediaType("VIDEO");
+            } else {
+                newPost.setMediaType(isAudio ? "AUDIO" : "IMAGE");
+            }
 
             String baseUrl = "http://10.0.2.2:8080/uploads/";
             newPost.setImageUrl(baseUrl + stegoFileName);
@@ -96,13 +88,24 @@ public class PostController {
             newPost.setProcessTime(extractDouble(results, "time"));
 
             // --- שלב 6: לוגיקה ספציפית לפי סוג מדיה ---
-            if (isAudio) {
+            if (isVideo) {
+                // לוגיקה חדשה לוידאו: שליפת המדדים שה-Analyzer והראוטר ייצרו
+                newPost.setMotionVariance(extractDouble(results, "motionVariance", "motion"));
+                newPost.setBitrateMbps(extractDouble(results, "bitrateMbps", "bitrate"));
+                newPost.setFps(extractDouble(results, "fps"));
+
+                // בוידאו כרגע אין Heatmap, אפשר להשאיר null או להשתמש בפריים ראשון
+                newPost.setHeatmapUrl(null);
+
+            } else if (isAudio) {
+                // לוגיקת אודיו קיימת - אל תיגע
                 String specFileName = UUID.randomUUID().toString() + "_spec.png";
                 com.photoServer.steganography.strategies.audio.SpectrogramGenerator.generateSpectrogram(stegoBytes, UPLOAD_DIR + specFileName);
                 newPost.setHeatmapUrl(baseUrl + specFileName);
                 newPost.setSnr(extractDouble(results, "snr", "SNR"));
                 newPost.setEntropy(extractDouble(results, "entropy", "Entropy"));
             } else {
+                // לוגיקת תמונה קיימת - אל תיגע
                 BufferedImage originalImg = ImageIO.read(new ByteArrayInputStream(originalBytes));
                 BufferedImage stegoImg = ImageIO.read(new ByteArrayInputStream(stegoBytes));
                 BufferedImage heatmap = QualityGuard.generateHeatmap(originalImg, stegoImg);
@@ -118,7 +121,7 @@ public class PostController {
                 newPost.setBpp(extractDouble(results, "bpp", "Payload"));
             }
 
-            // --- שלב 7: מורשי גישה ושמירה ---
+            // --- שלב 7: מורשי גישה ושמירה (נשאר ללא שינוי) ---
             if (userMessagesJson != null && !userMessagesJson.isEmpty()) {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, String> tempMap = mapper.readValue(userMessagesJson, new TypeReference<>(){});
@@ -126,7 +129,6 @@ public class PostController {
             }
 
             postService.savePost(newPost);
-
             return ResponseEntity.ok(Map.of("status", "success", "id", newPost.getId()));
 
         } catch (Exception e) {
@@ -134,11 +136,15 @@ public class PostController {
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
-    // פונקציית עזר לשליפה גנרית של דאבל מהמפה (נשארת בתוך ה-Controller)
+
+    // פונקציית עזר מעודכנת - תומכת עכשיו בכל המפתחות החדשים
     private double extractDouble(Map<String, Object> map, String... keys) {
         for (String key : keys) {
             if (map.containsKey(key) && map.get(key) != null) {
-                return ((Number) map.get(key)).doubleValue();
+                Object value = map.get(key);
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue();
+                }
             }
         }
         return 0.0;

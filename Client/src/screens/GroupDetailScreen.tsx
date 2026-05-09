@@ -679,31 +679,49 @@ const GroupDetailsScreen = ({ route, navigation }: any) => {
     const response = await fetch(`${BASE_URL}/posts/${post.id}/decrypt?userName=${userName}`);
     const data = await response.json();
 
-    // בדיקה אם השרת החזיר הודעת שגיאה במבנה של {message: "..."}
     if (!data.secret) {
       Alert.alert("הודעה", data.message || "לא נמצא מסר מוצפן עבורך.");
       setIsDecrypting(false);
       return;
     }
 
-    // 1. זיהוי סוג המדיה בצורה בטוחה
+    // 1. זיהוי סוג המדיה בצורה בטוחה (הוספת וידאו)
     const isAudio = post.mediaType === 'AUDIO' || 
                     post.imageUrl?.toLowerCase().endsWith('.wav') || 
                     post.imageUrl?.toLowerCase().endsWith('.mp3');
+    
+    const isVideo = post.mediaType === 'VIDEO' || 
+                    post.imageUrl?.toLowerCase().endsWith('.mp4') || 
+                    post.imageUrl?.toLowerCase().endsWith('.mov');
 
     // 2. הגדרת כותרות וכפתורים
-    const title = isAudio ? "🎵 חילוץ מדעי מהתדרים הושלם" : "🔓 חילוץ מדעי מהפיקסלים הושלם";
-    const visualBtnText = isAudio ? "📊 הצג ספקטרוגרמה" : "🔥 הצג מפת חום";
+    let title = "🔓 חילוץ מדעי מהפיקסלים הושלם";
+    let visualBtnText = "🔥 הצג מפת חום";
 
-    // 3. בניית מחרוזת המדדים בצורה בטוחה (למניעת שגיאת Text strings)
+    if (isAudio) {
+      title = "🎵 חילוץ מדעי מהתדרים הושלם";
+      visualBtnText = "📊 הצג ספקטרוגרמה";
+    } else if (isVideo) {
+      title = "🎬 חילוץ מדעי מהפריימים הושלם";
+      visualBtnText = "🔍 ניתוח ויזואלי"; // לוידאו לרוב אין heatmap סטטי
+    }
+
+    // 3. בניית מחרוזת המדדים
     let metrics = `המסר: ${String(data.secret)}\n\n`;
     metrics += `🔬 אלגוריתם: ${String(post.chosenAlgorithm || 'Dynamic Adaptive')}\n`;
 
     if (isAudio) {
+      // לוגיקת אודיו - נשארת כפי שביקשת
       metrics += `📊 איכות (SNR): ${post.snr ? post.snr.toFixed(2) : '0.00'} dB\n`;
       metrics += `🌀 חציית אפס (ZCR): ${post.zcr ? post.zcr.toFixed(4) : '0.0000'}\n`;
       metrics += `📦 יעילות: ${post.bpp ? post.bpp.toFixed(4) : '0.0000'}`;
+    } else if (isVideo) {
+      // לוגיקת וידאו חדשה - לפי השדות מה-Java
+      metrics += `🎞️ קצב פריימים: ${post.fps ? post.fps.toFixed(1) : '0.0'} FPS\n`;
+      metrics += `📉 רוחב פס: ${post.bitrateMbps ? post.bitrateMbps.toFixed(2) : '0.00'} Mbps\n`;
+      metrics += `🌀 מדד תנועה: ${post.motionVariance ? post.motionVariance.toFixed(4) : '0.0000'}`;
     } else {
+      // לוגיקת תמונה - נשארת כפי שביקשת
       metrics += `📊 איכות (PSNR): ${post.psnr ? post.psnr.toFixed(2) : '0.00'} dB\n`;
       metrics += `🔗 דמיון (SSIM): ${post.ssim ? post.ssim.toFixed(4) : '0.0000'}\n`;
       metrics += `🌀 אנטרופיה: ${post.entropy ? post.entropy.toFixed(4) : '0.0000'}\n`;
@@ -724,7 +742,8 @@ const GroupDetailsScreen = ({ route, navigation }: any) => {
               setCurrentHeatmapUrl(post.heatmapUrl);
               setHeatmapVisible(true);
             } else {
-              Alert.alert("הודעה", "לא קיימת ויזואליזציה לקובץ זה");
+              // בוידאו כרגע אין HeatmapUrl בשרת, אז זה יקפוץ כאן
+              Alert.alert("הודעה", "לא קיימת ויזואליזציה גרפית לסוג מדיה זה");
             }
           } 
         }

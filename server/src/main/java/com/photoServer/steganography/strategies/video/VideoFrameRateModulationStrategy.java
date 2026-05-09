@@ -202,7 +202,7 @@ public class VideoFrameRateModulationStrategy extends BaseSteganoStrategy implem
         return "MARKER_NOT_FOUND";
     }
 
-    private String bitsToText(String bits) {
+    protected String bitsToText(String bits) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i <= bits.length() - 8; i += 8) {
             try {

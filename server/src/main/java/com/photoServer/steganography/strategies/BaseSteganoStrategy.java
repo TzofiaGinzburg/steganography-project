@@ -2,6 +2,7 @@ package com.photoServer.steganography.strategies;
 
 import com.photoServer.steganography.SteganoStrategy;
 import java.awt.image.BufferedImage;
+import java.nio.charset.StandardCharsets;
 
 public abstract class BaseSteganoStrategy implements SteganoStrategy {
     // עוזר לחלץ את ההודעה הנקייה בתוך כל אסטרטגיה אם תרצי
@@ -41,5 +42,34 @@ public abstract class BaseSteganoStrategy implements SteganoStrategy {
         if (psnr < 40.0) {
             System.err.println("⚠️ WARNING: High distortion detected!");
         }
+    }
+    protected boolean[] toBits(String text) {
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        boolean[] bits = new boolean[bytes.length * 8];
+        for (int i = 0; i < bytes.length; i++) {
+            for (int j = 0; j < 8; j++) {
+                bits[i * 8 + j] = (bytes[i] >> (7 - j) & 1) == 1;
+            }
+        }
+        return bits;
+    }
+
+    // בתוך BaseSteganoStrategy.java
+    protected String bitsToText(String bitString) {
+        if (bitString == null || bitString.length() < 8) return "";
+
+        int byteCount = bitString.length() / 8;
+        byte[] bytes = new byte[byteCount];
+
+        for (int i = 0; i < byteCount; i++) {
+            // לוקחים כל פעם 8 תווים ("0" ו-"1") והופכים לבייט
+            String byteStr = bitString.substring(i * 8, i * 8 + 8);
+            try {
+                bytes[i] = (byte) Integer.parseInt(byteStr, 2);
+            } catch (NumberFormatException e) {
+                bytes[i] = 0; // טיפול במקרה של תו לא חוקי
+            }
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }
